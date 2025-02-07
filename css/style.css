@@ -1,0 +1,86 @@
+
+
+#banner {
+    background: rgb(228,221,190);
+background: linear-gradient(90deg, rgba(228,221,190,0.9640231092436975) 5%, rgba(240,235,193,1) 35%, rgba(250,246,151,1) 89%, rgba(255,249,185,1) 100%);
+    
+    
+  }
+  
+  #banner h2 {
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  #banner .qualities i {
+    margin-right: 10px;
+  }
+  
+  #banner .qualities span {
+    text-align: center;
+  }
+  
+  #banner .job img {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  
+  #banner button {
+    
+    transition: all 0.3s ease;
+  }
+  
+  #banner button:hover {
+    background-color: gray;
+    transform: scale(1.05);
+  }
+  
+  #banner .job {
+    position: relative;
+    margin-top: -30px;
+    
+  }
+
+  /* cart */
+
+  .cart-sidebar {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 300px;
+    height: 100%;
+    background: #fff;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease;
+    z-index: 1050;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  
+  .cart-sidebar.open {
+    right: 0;
+  }
+  
+  .cart-header {
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+  }
+  
+  .cart-footer {
+    position: sticky;
+    bottom: 0;
+    background: #f9f9f9;
+    padding: 10px 0;
+  }
+
+
+
+  
+  

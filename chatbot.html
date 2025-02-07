@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    
+</head>
+<body>
+
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+}
+
+/* Chatbot Icon */
+.chatbot-icon {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    cursor: pointer;
+    z-index: 1000;
+}
+
+.chatbot-icon img {
+    width: 100px; /* Make the image larger */
+    height: auto; /* Maintain aspect ratio */
+    transition: transform 0.3s ease;
+}
+
+.chatbot-icon img:hover {
+    transform: scale(1.1); /* Add a hover effect */
+}
+
+/* Chatbot Greeting Animation */
+.chatbot-greeting {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #007bff;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    opacity: 0;
+    animation: popup 2s ease-in-out;
+}
+
+@keyframes popup {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+    20% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    80% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+}
+
+/* Chatbot Container */
+.chatbot-container {
+    position: fixed;
+    bottom: 140px; /* Adjusted to accommodate the larger icon */
+    left: 20px;
+    width: 350px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.chatbot-header {
+    background: #007bff;
+    color: #fff;
+    padding: 15px;
+    text-align: center;
+}
+
+.chatbot-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+}
+
+.message {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    max-width: 80%;
+}
+
+.user-message {
+    background: #007bff;
+    color: #fff;
+    align-self: flex-end;
+}
+
+.bot-message {
+    background: #e9ecef;
+    color: #333;
+    align-self: flex-start;
+}
+
+.chatbot-input {
+    display: flex;
+    padding: 10px;
+    background: #fff;
+    border-top: 1px solid #ddd;
+}
+
+#user-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+#send-btn {
+    padding: 10px 15px;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#send-btn:hover {
+    background: #0056b3;
+}
+    </style>
+    <!-- Chatbot Icon -->
+    <div class="chatbot-icon" id="chatbot-icon">
+        <img src="images/botss-removebg-preview.png" alt="Chatbot Icon">
+        <div class="chatbot-greeting" id="chatbot-greeting">Hilo</div>
+    </div>
+
+    <!-- Chatbot Window -->
+    <div class="chatbot-container" id="chatbot-container">
+        <div class="chatbot-header">
+            <h3>Customer support</h3>
+        </div>
+        <div class="chatbot-messages" id="chatbot-messages">
+            <!-- Chat messages will appear here -->
+        </div>
+        <div class="chatbot-input">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+
+    <script> // Predefined responses for the chatbot
+        const responses = {
+            "hello": "Hello! How can I assist you today?",
+            "hi": "Hi there! I'm Third, How can I help you?",
+            "how are you": "I'm just a bot, but I'm here to help!",
+            "what is your name": "I'm your friendly Customer Support Bot.",
+            "help": "Sure! I can help with order tracking, product information, and more. What do you need?",
+            "track order": "Please provide your order ID, and I'll check the status for you.",
+            "thank you": "You're welcome! Let me know if you need anything else.",
+            "bye": "Goodbye! Have a great day!",
+            "default": "I'm sorry, I didn't understand that. Can you please rephrase?"
+        };
+        
+        // Function to add a message to the chat
+        function addMessage(message, sender) {
+            const chatMessages = document.getElementById("chatbot-messages");
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message");
+            messageElement.classList.add(sender === "user" ? "user-message" : "bot-message");
+            messageElement.textContent = message;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll to the latest message
+        }
+        
+        // Function to handle user input
+        function handleUserInput() {
+            const userInput = document.getElementById("user-input").value.trim().toLowerCase();
+            if (userInput === "") return;
+        
+            // Add user's message to the chat
+            addMessage(userInput, "user");
+        
+            // Find a response or use the default
+            let botResponse = responses[userInput] || responses["default"];
+        
+            // Simulate a delay for the bot's response
+            setTimeout(() => {
+                addMessage(botResponse, "bot");
+            }, 500);
+        
+            // Clear the input field
+            document.getElementById("user-input").value = "";
+        }
+        
+        // Event listener for the send button
+        document.getElementById("send-btn").addEventListener("click", handleUserInput);
+        
+        // Event listener for the Enter key
+        document.getElementById("user-input").addEventListener("keypress", function (e) {
+            if (e.key === "Enter") {
+                handleUserInput();
+            }
+        });
+        
+        // Show the chatbot greeting when the page loads
+        window.onload = function () {
+            const greeting = document.getElementById("chatbot-greeting");
+            greeting.style.opacity = "1";
+            setTimeout(() => {
+                greeting.style.opacity = "0";
+            }, 2000); // Hide the greeting after 2 seconds
+        };
+        
+        // Toggle chatbot window when the icon is clicked
+        document.getElementById("chatbot-icon").addEventListener("click", function () {
+            const chatbotContainer = document.getElementById("chatbot-container");
+            if (chatbotContainer.style.display === "none" || chatbotContainer.style.display === "") {
+                chatbotContainer.style.display = "flex";
+                addMessage("How can I help you?", "bot"); // Bot's initial message
+            } else {
+                chatbotContainer.style.display = "none";
+            }
+        });</script>
+</body>
+</html>

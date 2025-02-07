@@ -1,0 +1,15 @@
+INSERT INTO products (
+    product_name,
+    product_description,
+    image_url,
+    original_price,
+    discounted_price,
+    discount_percentage
+) VALUES (
+    'Tumbler',
+    'Great Wall Arts',
+    'images/1st.png',
+    1500.00,
+    1000.00,
+    10.00
+);

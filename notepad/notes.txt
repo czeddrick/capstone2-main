@@ -1,0 +1,650 @@
+// paypal 
+
+
+<script src="http://www.paypal.com/sdk/js?client-id=AfWWgIuFSgyu8PBCPZaSblbJ4tuRBURmBDp3lGvNAqcyJmX5zn84vfiPbbEgTviDvsI7kkHQqMSaxYcY"></script>
+
+<div class="col-12">
+                <div id="paypal-button-container" class="my-4"></div>
+                <script>
+                    paypal.Buttons().render('#paypal-button-container');
+                </script>
+            </div>
+
+Cancel order .......
+
+//CAPTCHA
+
+ <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
+    // Captcha validation
+    $captcha = $_POST['g-recaptcha-response'] ?? '';
+    $secretKey = '6Lci_U4qAAAAADpnsZ7iksRyKzezJJp2E5jsn_nf'; // Replace with your secret key
+    $verifyUrl = "https://www.google.com/recaptcha/api/siteverify";
+    
+    $response = file_get_contents("$verifyUrl?secret=$secretKey&response=$captcha");
+    $responseKeys = json_decode($response, true);
+
+    if (!$responseKeys['success']) {
+        $error = "Please verify that you are not a robot.";
+    } else {
+
+
+
+
+
+
+
+
+
+
+
+ $check_cart = $conn->prepare("SELECT * FROM `cart` WHERE user_id = ?");
+   $check_cart->execute([$user_id]);
+
+   if($check_cart->rowCount() > 0) {
+      // Insert the order into the orders table
+      $insert_order = $conn->prepare("INSERT INTO `orders`(user_id, name, number, email, method, address, total_products, total_price) VALUES(?,?,?,?,?,?,?,?)");
+      $insert_order->execute([$user_id, $name, $number, $email, $method, $address, $total_products, $grand_total]);
+
+      // Delete the cart after the order is placed
+      $delete_cart = $conn->prepare("DELETE FROM `cart` WHERE user_id = ?");
+      $delete_cart->execute([$user_id]);
+
+      // Insert purchase history for tracking
+      $insert_purchase = $conn->prepare("INSERT INTO `customer_purchase_history` (customer_id, total_price, purchase_date) VALUES (?, ?, NOW())");
+      $insert_purchase->execute([$user_id, $grand_total]);
+
+
+      $insert_order = $conn->prepare("
+    INSERT INTO orders 
+    (user_id, name, number, email, address, payment_method, voucher_used, total_products, total_price, placed_on, status, message) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+");
+
+// Assign variables for binding
+$name = $user['first_name'] . " " . $user['surname'];
+$number = $user['phone'];
+$email = $user['email'];
+$address = $user['address'];
+$payment_method = "GCash"; // Replace with actual payment method
+$message = ""; // Add user message or leave empty
+$voucher_used = "10% Off"; // Example voucher
+$total_products = count($cart);
+$total_price = $totalPayment; // Total payment including discounts
+$placed_on = date("Y-m-d H:i:s");
+$status = "Pending";
+
+// Execute the prepared statement
+$insert_order->bind_param(
+    "isssssssssss",
+    $user_id,
+    $name,
+    $number,
+    $email,
+    $address,
+    $payment_method,
+    $voucher_used,
+    $total_products,
+    $total_price,
+    $placed_on,
+    $status,
+    $message
+);
+
+if ($insert_order->execute()) {
+    // Clear the user's cart
+    $clear_cart = $conn->prepare("DELETE FROM cart_items WHERE user_id = ?");
+    $clear_cart->bind_param("i", $user_id);
+    $clear_cart->execute();
+    $clear_cart->close();
+
+    echo "<div class='alert alert-success'>Order placed successfully!</div>";
+} else {
+    echo "<div class='alert alert-danger'>Error placing order: " . $insert_order->error . "</div>";
+}
+$insert_order->close();
+} else {
+    echo "<div class='alert alert-danger'>Your cart is empty!</div>";
+}
+
+
+
+
+
+
+/// checkout
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Checkout</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<?php
+// Include database connection
+include 'db/connect.php';
+session_start();
+
+// Check if cart data is available
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cart'])) {
+    $cart = array_map(function($item) {
+        return json_decode($item, true);
+    }, $_POST['cart']);
+} else {
+    header("Location: cart.php");
+    exit;
+}
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+// Fetch user data
+$user_id = $_SESSION['user_id'];
+$sql = "SELECT first_name, surname, email, phone, address FROM users WHERE id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$user = $result->fetch_assoc();
+$stmt->close();
+
+// Calculate order totals
+$merchandiseSubtotal = array_reduce($cart, function($total, $item) {
+    return $total + ($item['price'] * $item['quantity']);
+}, 0);
+$shippingSubtotal = 26;
+$voucherDiscount = 15;
+$totalPayment = $merchandiseSubtotal + $shippingSubtotal - $voucherDiscount;
+
+// Insert order into database if form submitted
+// Check if cart contains items
+$check_cart_items = $conn->prepare("SELECT * FROM cart_items WHERE user_id = ?");
+$check_cart_items->bind_param("i", $user_id);
+$check_cart_items->execute();
+$result = $check_cart_items->get_result();
+
+if ($result->num_rows > 0) {
+    // Calculate totals
+    $cart_items = [];
+    $total_products = 0;
+    $total_price = 0;
+
+    while ($row = $result->fetch_assoc()) {
+        $cart_items[] = $row;
+        $total_products += $row['quantity'];
+        $total_price += $row['price'] * $row['quantity'];
+    }
+
+    $voucher_used = "10% Off"; // Example voucher
+    $discount = $total_price * 0.10; // Calculate 10% discount
+    $total_payment = $total_price - $discount;
+    $placed_on = date("Y-m-d H:i:s");
+    $status = "Pending";
+
+    // Insert the order into the orders table
+    $insert_order = $conn->prepare("
+    INSERT INTO orders 
+    (user_id, name, number, email, address, payment_method, voucher_used, total_products, total_price, placed_on, status, message) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+");
+
+// Assign variables for binding
+$name = $user['first_name'] . " " . $user['surname'];
+$number = $user['phone'];
+$email = $user['email'];
+$address = $user['address'];
+$payment_method = "GCash"; // Replace with actual payment method
+$message = ""; // Add user message or leave empty
+$voucher_used = "10% Off"; // Example voucher
+$total_products = count($cart);
+$total_price = $totalPayment; // Total payment including discounts
+$placed_on = date("Y-m-d H:i:s");
+$status = "Pending";
+
+// Execute the prepared statement
+$insert_order->bind_param(
+    "isssssssssss",
+    $user_id,
+    $name,
+    $number,
+    $email,
+    $address,
+    $payment_method,
+    $voucher_used,
+    $total_products,
+    $total_price,
+    $placed_on,
+    $status,
+    $message
+);
+
+if ($insert_order->execute()) {
+    // Clear the user's cart
+    $clear_cart = $conn->prepare("DELETE FROM cart_items WHERE user_id = ?");
+    $clear_cart->bind_param("i", $user_id);
+    $clear_cart->execute();
+    $clear_cart->close();
+
+    echo "<div class='alert alert-success'>Order placed successfully!</div>";
+} else {
+    echo "<div class='alert alert-danger'>Error placing order: " . $insert_order->error . "</div>";
+}
+$insert_order->close();
+} else {
+    echo "<div class='alert alert-danger'>Your cart is empty!</div>";
+}
+?>
+<div class="container my-5">
+    <!-- Delivery Address Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-map-marker-alt"></i> Delivery Address</h5>
+            <p class="card-text">
+                <strong><?php echo htmlspecialchars($user['first_name'] . ' ' . $user['surname']); ?> 
+                (<?php echo htmlspecialchars($user['phone']); ?>)</strong><br>
+                <?php echo nl2br(htmlspecialchars($user['address'])); ?>
+            </p>
+            <a href="edit_account.php" class="btn btn-dark btn-sm">Edit</a>
+        </div>
+    </div>
+
+    <!-- Products Ordered Section -->
+    <h1>Checkout</h1>
+    <form method="post" action="checkout.php">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Image</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($cart as $item): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($item['product_name']); ?></td>
+                        <td><img src="<?php echo htmlspecialchars($item['image_url']); ?>" style="width: 80px;"></td>
+                        <td>₱<?php echo number_format($item['price'], 2); ?></td>
+                        <td><?php echo htmlspecialchars($item['quantity']); ?></td>
+                        <td>₱<?php echo number_format($item['price'] * $item['quantity'], 2); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <!-- Payment Summary -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Payment Summary</h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Merchandise Subtotal:</span>
+                    <span>₱<?php echo number_format($merchandiseSubtotal, 2); ?></span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Shipping Subtotal:</span>
+                    <span>₱<?php echo number_format($shippingSubtotal, 2); ?></span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Voucher Discount:</span>
+                    <span>-₱<?php echo number_format($voucherDiscount, 2); ?></span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center">
+                    <strong>Total Payment:</strong>
+                    <strong>₱<?php echo number_format($totalPayment, 2); ?></strong>
+                </div>
+            </div>
+        </div>
+
+        <a href="cart.php" class="btn btn-dark">Back to Cart</a>
+        <button type="submit" name="place_order" class="btn btn-warning">Place Order</button>
+    </form>
+</div>
+
+<!-- Order Summary Modal -->
+<div class="modal fade" id="orderSummaryModal" tabindex="-1" aria-labelledby="orderSummaryLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderSummaryLabel">Order Summary</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Name:</strong> <?php echo htmlspecialchars($user['first_name'] . ' ' . $user['surname']); ?></p>
+                <p><strong>Email:</strong> <?php echo htmlspecialchars($user['email']); ?></p>
+                <p><strong>Total Payment:</strong> ₱<?php echo number_format($totalPayment, 2); ?></p>
+                <p>Thank you for your order! You will receive an email confirmation shortly.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+
+// 2 checkout 
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Checkout</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <script src="http://www.paypal.com/sdk/js?client-id=AfWWgIuFSgyu8PBCPZaSblbJ4tuRBURmBDp3lGvNAqcyJmX5zn84vfiPbbEgTviDvsI7kkHQqMSaxYcY"></script>
+
+    
+</head>
+<body>
+<?php
+// Include database connection
+include 'db/connect.php';
+
+// Check if cart data is available
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cart'])) {
+    $cart = array_map(function($item) {
+        return json_decode($item, true);
+    }, $_POST['cart']);
+} else {
+    // Redirect back to cart if no cart data is available
+    header("Location: cart.php");
+    exit;
+}
+
+// Include navigation bar
+include 'navbar.php'; 
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php'); // Redirect to login page if not logged in
+    exit;
+}
+
+// Fetch user data
+$user_id = $_SESSION['user_id'];
+$sql = "SELECT first_name, surname, email, phone, address FROM users WHERE id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$user = $result->fetch_assoc();
+$stmt->close();
+
+// Calculate merchandise subtotal
+$merchandiseSubtotal = array_reduce($cart, function($total, $item) {
+    return $total + ($item['price'] * $item['quantity']);
+}, 0);
+
+// Define shipping and voucher values (example values)
+$shippingSubtotal = 26; // Example static shipping cost
+$voucherDiscount = 15;  // Example static voucher discount
+
+// Calculate total payment
+$totalPayment = $merchandiseSubtotal + $shippingSubtotal - $voucherDiscount;
+
+$check_cart_items = $conn->prepare("SELECT * FROM `cart_items` WHERE user_id = ?");
+$check_cart_items->bind_param("i", $user_id);
+$check_cart_items->execute();
+$result = $check_cart_items->get_result();
+
+if ($result->num_rows > 0) {
+    // Insert the order into the orders table
+    $insert_order = $conn->prepare("INSERT INTO `orders` (user_id, name, number, email, address, payment_method, voucher_used, total_products, total_price, placed_on, status, message) 
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $insert_order->bind_param("isssssssssss", 
+        $user_id, 
+        $name, 
+        $number, 
+        $email, 
+        $address, 
+        $payment_method, 
+        $voucher_used, 
+        $total_products, 
+        $total_priced, 
+        $placed_on, 
+        $status, 
+        $message
+    );
+
+    // Make sure to define the variables being bound
+    $name = "Example Name"; // Replace with actual values
+    $number = "123456789";
+    $email = $user['email'];
+    $address = $user['address'];
+    $payment_method = "GCash"; // Replace with actual payment method
+    $voucher_used = "10% Off"; // Replace with actual voucher details
+    $total_products = count($cart);
+    $total_priced = $totalPayment;
+    $placed_on = date("Y-m-d H:i:s");
+    $status = "Pending";
+    $message = "";
+
+    if ($insert_order->execute()) {
+        echo "Order placed successfully!";
+    } else {
+        echo "Error: " . $insert_order->error;
+    }
+    $insert_order->close();
+} else {
+    echo "Your cart is empty.";
+}
+
+  
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container my-5">
+    <!-- Delivery Address Section -->
+    <div class="card mb-4" style="position: relative;">
+        <div class="card-body">
+            <h5 class="card-title"><i class="fas fa-map-marker-alt"></i> Delivery Address</h5>
+            <p class="card-text">
+                <strong><?php echo htmlspecialchars($user['first_name'] . ' ' . $user['surname']); ?> 
+                (<?php echo htmlspecialchars($user['phone']); ?>)</strong><br>
+                <?php echo nl2br(htmlspecialchars($user['address'])); ?>
+            </p>
+            <a href="edit_account.php" class="btn btn-dark btn-sm" style="position: absolute; top: 10px; right: 10px;">Edit</a>
+        </div>
+    </div>
+
+    <!-- Products Ordered Section -->
+    <div class="container">
+        <h1>Checkout</h1>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Image</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($cart as $item): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($item['product_name']); ?></td>
+                        <td><img src="<?php echo htmlspecialchars($item['image_url']); ?>" style="width: 80px;"></td>
+                        <td>₱<?php echo number_format($item['price'], 2); ?></td>
+                        <td><?php echo htmlspecialchars($item['quantity']); ?></td>
+                        <td>₱<?php echo number_format($item['price'] * $item['quantity'], 2); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Shop Voucher Section -->
+    <div class="row mb-4">
+    <!-- Shop Voucher Section -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Shop Voucher</h5>
+                <button class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#shopVoucherModal">Change Voucher</button>
+            </div>
+        </div>
+    </div>
+    <!-- Payment Method Section -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-start">
+                <h5 class="card-title">Payment Method</h5>
+                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#paymentMethodModal">Select Payment Method</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <!-- Modal for Shop Voucher -->
+    <div class="modal fade" id="shopVoucherModal" tabindex="-1" aria-labelledby="shopVoucherModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="shopVoucherModalLabel">Choose Your Voucher</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        <button class="list-group-item list-group-item-action">10% Off</button>
+                        <button class="list-group-item list-group-item-action">Free Shipping</button>
+                        <button class="list-group-item list-group-item-action">Buy 1 Get 1 Free</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>   
+    <!-- Modal for Payment Options -->
+    <div class="modal fade" id="paymentMethodModal" tabindex="-1" aria-labelledby="paymentMethodModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentMethodModalLabel">Choose Payment Method</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group">
+                        <button class="list-group-item list-group-item-action">GCash</button>
+                        <div class="col-12">
+                <div id="paypal-button-container" class="my-4"></div>
+                <script>
+                    paypal.Buttons().render('#paypal-button-container');
+                </script>
+            </div>
+                        <button class="list-group-item list-group-item-action">Cash on Delivery (COD)</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Summary -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Payment Summary</h5>
+            <div class="d-flex justify-content-between align-items-center">
+                <span>Merchandise Subtotal:</span>
+                <span>₱<?php echo number_format($merchandiseSubtotal, 2); ?></span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <span>Shipping Subtotal:</span>
+                <span>₱<?php echo number_format($shippingSubtotal, 2); ?></span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <span>Voucher Discount:</span>
+                <span>-₱<?php echo number_format($voucherDiscount, 2); ?></span>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between align-items-center">
+                <strong>Total Payment:</strong>
+                <strong>₱<?php echo number_format($totalPayment, 2); ?></strong>
+            </div>
+        </div>
+    </div>
+
+    <a href="cart.php" class="btn btn-dark">Back to Cart</a>
+    <div class="text-end">
+        <a class="btn btn-warning">Place Order</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+
+// checkout 
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Retrieve data from the form
+    $user_id = $_POST['user_id']; // Ensure this is dynamically passed from your session or frontend
+    $name = $_POST['name'];
+    $number = $_POST['number'];
+    $email = $_POST['email'];
+    $address = $_POST['address'];
+    $payment_method = $_POST['payment_method'];
+    $voucher_used = isset($_POST['voucher_used']) ? $_POST['voucher_used'] : "None";
+    $total_products = $_POST['total_products'];
+    $total_price = $_POST['total_price'];
+    $status = "Pending"; // Default status
+    $message = "Order placed successfully!"; // Default message
+
+    // SQL query to insert the order data into the database
+    $sql = "INSERT INTO orders (user_id, name, number, email, address, payment_method, voucher_used, total_products, total_price, placed_on, status, message) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?);";
+
+    // Prepare and bind the statement
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("issssssddss", $user_id, $name, $number, $email, $address, $payment_method, $voucher_used, $total_products, $total_price, $status, $message);
+
+    // Execute the statement
+    if ($stmt->execute()) {
+        // Redirect to a confirmation page or display a success message
+        echo "<script>alert('Order placed successfully!');</script>";
+        echo "<script>window.location.href='order_confirmation.php';</script>";
+    } else {
+        // Display an error message
+        echo "Error: " . $stmt->error;
+    }
+
+    // Close the statement and connection
+    $stmt->close();
+    $conn->close();
+}
+
+
+

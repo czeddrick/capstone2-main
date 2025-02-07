@@ -1,0 +1,14 @@
+id,product_name,product_description,image_url,original_price,discounted_price,discount_percentage,stock,sold
+1,Powerbank,GREAT WALL ARTS PH / AAMBER 5 (VACUUM INSULATED BO...,images/bankk.png,1500.0,1000.0,10.0,10,12
+2,Speaker,GREAT WALL ARTS PH / AAMBER 5 (VACUUM INSULATED BO...,images/new4.png,1500.0,1000.0,10.0,10,0
+3,Utensils,GREAT WALL ARTS PH / AAMBER 5 (Utensils Affordable...,images/p-3.png,900.0,1000.0,10.0,10,11
+4,Tumbler,GREAT WALL ARTS PH / AAMBER 5 (VACUUM INSULATED BO...,images/p-4.png,1500.0,1000.0,10.0,10,0
+5,Tumbler,Great Wall Arts,images/tumbler2.png,1500.0,1000.0,10.0,10,0
+6,Tumbler,Great Wall Arts,images/3t.png,1500.0,1000.0,10.0,10,0
+7,Tumbler,Great Wall Arts,images/5th.png,1500.0,1000.0,10.0,10,0
+8,Tumbler,Great Wall Arts,images/5th.png,1500.0,1000.0,10.0,10,0
+9,Tumbler,Great Wall Arts,images/4th.png,1500.0,1000.0,10.0,10,0
+10,Tumbler,Great Wall Arts,images/new2.png,1500.0,1000.0,10.0,10,0
+11,Gift Set,Great Wall Arts,images/tumbler123456.webp,1500.0,1000.0,10.0,10,19
+12,Tumbler,Great Wall Arts,images/tumbler1234.webp,1500.0,1000.0,10.0,10,0
+13,Tumbler,Great Wall Arts,images/tumbler1234.webp,1500.0,1000.0,10.0,10,20

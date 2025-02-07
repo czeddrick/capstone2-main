@@ -1,0 +1,2 @@
+Response: {"status":200,"message":"Your SMS message has been successfully added to the queue and will be processed shortly.","message_id":"iSms-whN1JQ"}
+HTTP Code: 200
