@@ -1,7 +1,7 @@
 
 <?php
  include "db/connect.php";
- include 'navbar.php';
+
 ?>
 
 <?php
@@ -17,8 +17,19 @@ if ($result->num_rows > 0) {
     echo "No products found.";
 }
 ?>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
 
+
+  <body>
+ <?php include 'navbar.php'; ?>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
 <div class="container my-5"> 
   <h2 class="text-center mb-4" style="font-family: fantasy; color: #343a40;">Featured Products</h2>
   <p class="text-center" style="font-family: 'Courier New', Courier, monospace; font-size: 20px; color: gray;">
@@ -52,28 +63,9 @@ if ($result->num_rows > 0) {
                   <?php echo $product['stock'] > 0 ? $product['stock'] : '<span class="text-danger">Out of Stock</span>'; ?>
                 </p>
                 <p class="small text-muted mb-0">Sold: 
-                  <span class="fw-bold"><?php echo $product['sold']; ?></span>
+                  <span class="fw-bold" class="total_review" ><?php echo $product['sold']; ?></span>
                 </p>
               </div>
-
-              <form action="cart.php" method="POST">
-                <?php if (isset($_SESSION['user_id'])): ?>
-                  <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
-                  <input type="hidden" name="product_name" value="<?php echo $product['product_name']; ?>">
-                  <input type="hidden" name="price" value="<?php echo $product['discounted_price']; ?>">
-                  <input type="hidden" name="quantity" value="1">
-                  <input type="hidden" name="image_url" value="<?php echo $product['image_url']; ?>">
-                  <input type="hidden" name="add_to_cart" value="1">
-                  <button class="btn btn-outline-warning btn-sm" type="submit" 
-                    <?php echo $product['stock'] <= 0 ? 'disabled' : ''; ?>>
-                    <i class="fas fa-shopping-cart"></i> Add to Cart
-                  </button>
-                <?php else: ?>
-                  <a href="main/user_login.php" class="btn btn-outline-warning btn-sm">
-                    <i class="fas fa-shopping-cart"></i> Add to Cart
-                  </a>
-                <?php endif; ?>
-              </form>
             </div>
           </div>
         </div>
@@ -83,8 +75,10 @@ if ($result->num_rows > 0) {
     <?php endif; ?>
 </div>
 
-<style> 
-body {
-    padding-top: 60px; /* Adjust based on the height of your navbar */
-}
-</style>
+
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

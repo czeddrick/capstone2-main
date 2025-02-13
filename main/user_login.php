@@ -147,6 +147,14 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
         .position-relative button i {
             color: #666;
         }
+        .center-links {
+            text-align: center;
+            margin-top: 15px; /* Adjust spacing */
+        }
+        .center-links a {
+            display: block; /* Make links appear on separate lines */
+            margin-bottom: 10px; /* Spacing between links */
+        }
     </style>
 </head>
 <body>
@@ -185,8 +193,13 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
                     </a>
                 </div>
                 <button type="submit" name="login" class="btn btn-warning w-100 mt-3">Login</button>
-                <a href="otp_request.php">Create an Account</a>
+                
             </form>
+            <div class="center-links">
+                <a href="otp_request.php">Create an Account</a>
+                <a href="../index.php">Browse without an account</a>
+            </div>
+
             <?php if (isset($error)) { echo "<div class='error'>$error</div>"; } ?>
         </div>
     </div>

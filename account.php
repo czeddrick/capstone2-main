@@ -215,25 +215,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search_box'])) {
 // Avoid closing the connection prematurely; move `$conn->close()` to the end of the script if needed.
 ?>
 
-            
-            
-
-
-
-
-
-
-
-
-
-            
-          
-
-
-
-
-
-    
     <div class="container mt-4">
         <div class="row">
             <!-- Sidebar -->
@@ -261,15 +242,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search_box'])) {
                     <a href="user_account/settings.php" class="list-group-item list-group-item-action">
                         <i class="fas fa-cog"></i> Settings
                     </a>
-                    <a href="db/logout.php" class="list-group-item list-group-item-action">
+                    <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#logoutModal">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
-</div>
-
             </div>
+      </div>
 
             
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to log out?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="db/logout.php" class="btn btn-danger">Logout</a>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Bootstrap JS (Make sure Bootstrap is included) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
             
                 
 

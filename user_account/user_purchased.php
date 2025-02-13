@@ -168,7 +168,7 @@ $result = $stmt->get_result();
 
 <!-- Cancel Order Modal -->
 <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form action="cancel_order.php" method="POST">
                 <div class="modal-header">
@@ -198,7 +198,7 @@ $result = $stmt->get_result();
 
 <!-- View Details Modal -->
 <div class="modal fade" id="viewDetailsModal" tabindex="-1" aria-labelledby="viewDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="viewDetailsModalLabel">Order Details</h5>
@@ -210,7 +210,8 @@ $result = $stmt->get_result();
                         <img id="detailImage" src="" alt="Product Image" class="img-fluid rounded" style="max-height: 200px;">
                     </div>
                     <div class="col-md-8">
-                        <h5 id="detailProductName" class="card-title"></h5>
+                        <p>Order ID: <span id="detailorderid"><?php echo htmlspecialchars($order['id']); ?></span></p>
+                        <h5 id="detailProductName" class="card-title" style="margin-bottom: 5px;"></h5>
                         <p class="text-muted mb-1"><strong>Payment Method:</strong> <span id="detailPaymentMethod"></span></p>
                         <p class="text-muted mb-1"><strong>Voucher Used:</strong> <span id="detailVoucherUsed"></span></p>
                         <p class="text-muted mb-1"><strong>product id:</strong> <span id="detailproductid"></span></p>
@@ -231,7 +232,7 @@ $result = $stmt->get_result();
 
 <!-- Contact Us Modal -->
 <div class="modal fade" id="contactUsModal" tabindex="-1" aria-labelledby="contactUsModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form action="contact_us.php" method="POST">
                 <div class="modal-header">
@@ -277,6 +278,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const order = JSON.parse(this.getAttribute('data-order'));
             document.getElementById('detailImage').src = order.image.startsWith('http') ? order.image : `http://localhost/capstone2-main/${order.image}`;
             document.getElementById('detailProductName').textContent = order.product_name;
+            document.getElementById('detailorderid').textContent = order.id || 'N/A';
             document.getElementById('detailproductid').textContent = order.product_id;
             document.getElementById('detailPaymentMethod').textContent = order.payment_method;
             document.getElementById('detailVoucherUsed').textContent = order.voucher_used || 'None';
@@ -303,12 +305,13 @@ document.addEventListener('DOMContentLoaded', function () {
 <!-- Review Modal -->
 <div id="review_modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="reviewModalLabel" aria-hidden="true">
     <?php if (isset($_SESSION['user_id'])): ?>
-  	<div class="modal-dialog" role="document">
+  	<div class="modal-dialog modal-md modal-dialog-centered" role="document">
     	<div class="modal-content">
 	      	<div class="modal-header">
 	        	<h5 class="modal-title">Submit Review</h5>
 	        	<div class="col-md-4 text-center">
                     <img id="detailImage" src="" alt="Product Image" class="img-fluid rounded" style="max-height: 200px;">
+                    
                 </div>
 	      	</div>
 	      	<div class="modal-body">

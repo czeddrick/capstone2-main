@@ -2,8 +2,6 @@
  include "db/connect.php";            
 ?>
 
-
-
 <?php
 // Fetch all products initially
 $sql = "SELECT * FROM products"; 
@@ -348,27 +346,6 @@ $conn->close();
                   <span class="fw-bold"><?php echo $product['sold']; ?></span>
                 </p>
               </div>
-
-              <form action="cart.php" method="POST" onsubmit="return false;">
-    <?php if (isset($_SESSION['user_id'])): ?>
-        <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
-        <input type="hidden" name="product_name" value="<?php echo $product['product_name']; ?>">
-        <input type="hidden" name="price" value="<?php echo $product['discounted_price']; ?>">
-        <input type="hidden" name="quantity" value="1">
-        <input type="hidden" name="image_url" value="<?php echo $product['image_url']; ?>">
-        <input type="hidden" name="add_to_cart" value="1">
-        <button class="btn btn-outline-warning btn-sm" type="button" onclick="addToCart(this)" 
-            <?php echo $product['stock'] <= 0 ? 'disabled' : ''; ?>>
-            <i class="fas fa-shopping-cart"></i> Add to Cart
-        </button>
-    <?php else: ?>
-        <a href="main/user_login.php" class="btn btn-outline-warning btn-sm">
-            <i class="fas fa-shopping-cart"></i> Add to Cart
-        </a>
-    <?php endif; ?>
-</form>
-
-
             </div>
           </div>
         </div>
@@ -388,9 +365,9 @@ $conn->close();
         <h2> Graphic Designer </h2>
         <h5>QUALITIES:</h5>
         <p> 2 - 3 YEARS EXPERIENCE
-BACHELOR'S DEGREE IN GRAPHIC </p>
-<p>DESIGN STRONG TECHNICAL DESIGN SKILLS
-</p>
+          BACHELOR'S DEGREE IN GRAPHIC </p>
+          <p>DESIGN STRONG TECHNICAL DESIGN SKILLS
+        </p>
         <a href="#" class="btn btn-outline-warning text-dark">Apply Now</a>
       </div>
       <video  class="video" src="images/graphic.mp4" autoplay muted loop></video>

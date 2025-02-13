@@ -11,6 +11,12 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
 <body>
+<?php if (isset($_SESSION['message'])): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <?php echo $_SESSION['message']; unset($_SESSION['message']); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
 
 <?php
 include "db/connect.php";
@@ -30,31 +36,52 @@ if (isset($_SESSION['user_id'])) {
     $user_id = $_SESSION['user_id'];
 
     // Fetch cart items from the database
-    $stmt = $conn->prepare("SELECT product_id, product_name AS product_name, price, quantity, image AS image_url FROM cart_items WHERE user_id = ?");
+    $stmt = $conn->prepare("SELECT id, product_id, product_name AS product_name, price, quantity, image AS image_url FROM cart_items WHERE user_id = ?");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $result = $stmt->get_result();
     $_SESSION['cart'] = $result->fetch_all(MYSQLI_ASSOC);
 }
 
-// Handle adding to cart
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
     if (isset($_SESSION['user_id'])) {
         $user_id = $_SESSION['user_id'];
         $product_id = $_POST['product_id'];
         $name = $_POST['product_name'];
-        $quantity = $_POST['quantity'];
+        $quantity = (int)$_POST['quantity'];
         $price = $_POST['price'];
         $image = $_POST['image_url'];
 
-        // Insert into the database
-        $stmt = $conn->prepare("INSERT INTO cart_items (user_id, product_id, product_name, quantity, price, image) 
-                                VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("iisids", $user_id, $product_id, $name, $quantity, $price, $image);
+        $stmt = $conn->prepare("SELECT id, quantity FROM cart_items WHERE user_id = ? AND product_id = ?");
+        $stmt->bind_param("ii", $user_id, $product_id);
         $stmt->execute();
+        $result = $stmt->get_result();
+        $existingItem = $result->fetch_assoc();
 
-        // Redirect to cart
-        header("Location: cart.php");
+        if ($existingItem) {
+            $newQuantity = $existingItem['quantity'] + $quantity;
+            $stmt = $conn->prepare("UPDATE cart_items SET quantity = ? WHERE id = ?");
+            $stmt->bind_param("ii", $newQuantity, $existingItem['id']);
+            $stmt->execute();
+        } else {
+            $stmt = $conn->prepare("INSERT INTO cart_items (user_id, product_id, product_name, quantity, price, image) 
+                                    VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("iisids", $user_id, $product_id, $name, $quantity, $price, $image);
+            $stmt->execute();
+        }
+
+        // Sync session cart
+        $stmt = $conn->prepare("SELECT id, product_id, product_name, price, quantity, image FROM cart_items WHERE user_id = ?");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $_SESSION['cart'] = $result->fetch_all(MYSQLI_ASSOC);
+
+        // Set session variable for modal display
+        $_SESSION['added_to_cart'] = true;
+
+        // Redirect to prevent form resubmission
+        header("Location: " . $_SERVER['HTTP_REFERER']);
         exit;
     } else {
         header("Location: main/user_login.php");
@@ -63,56 +90,69 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
 }
 
 
-// Handle deleting an item from the cart
+// Before (using index)
 if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['index'])) {
     $index = (int)$_GET['index'];
     if (isset($_SESSION['cart'][$index])) {
         $product_id = $_SESSION['cart'][$index]['product_id'];
-
-        // Remove the item from the session cart
-        unset($_SESSION['cart'][$index]);
-        $_SESSION['cart'] = array_values($_SESSION['cart']); // Reindex array
-
-        // Delete the item from the database
-        if (isset($_SESSION['user_id'])) {
-            $stmt = $conn->prepare("DELETE FROM cart_items WHERE user_id = ? AND product_id = ?");
-            $stmt->bind_param("ii", $_SESSION['user_id'], $product_id);
-            if (!$stmt->execute()) {
-                echo "Error deleting from database: " . $stmt->error;
-            }
-        }
+        // ... delete from session and database
     }
 }
-// Handle updating quantities
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_cart'])) {
-    if (isset($_POST['quantities']) && is_array($_POST['quantities'])) {
-        foreach ($_POST['quantities'] as $index => $quantity) {
-            if (isset($_SESSION['cart'][$index])) {
-                $product_id = $_SESSION['cart'][$index]['product_id'];
-                $_SESSION['cart'][$index]['quantity'] = (int)$quantity;
 
-                // Update quantity in the database
-                if (isset($_SESSION['user_id'])) {
-                    $stmt = $conn->prepare("UPDATE cart_items SET quantity = ? WHERE user_id = ? AND product_id = ?");
-                    $stmt->bind_param("iii", $quantity, $_SESSION['user_id'], $product_id);
-                    if (!$stmt->execute()) {
-                        echo "Error updating database: " . $stmt->error;
-                    }
-                }
-            }
+// After (using id)
+if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id'])) {
+    $cart_item_id = (int)$_GET['id'];
+
+    // Remove from session cart
+    foreach ($_SESSION['cart'] as $key => $item) {
+        if ($item['id'] === $cart_item_id) {
+            unset($_SESSION['cart'][$key]);
+            $_SESSION['cart'] = array_values($_SESSION['cart']); // Reindex
+            break;
         }
-        
-        
-    } else {
-        // Handle case where 'quantities' is not set or invalid
-        echo '<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 1000;">
-                <div style="background: transparent; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                    <p style="font-size: 20px; color: white; margin-bottom: 20px;">Your cart is empty! Please continue shopping!</p>
-                    <button onclick="window.history.back();" style="padding: 10px 20px; font-size: 16px; color: black;  border: none; border-radius: 5px; cursor: pointer;" class="btn btn-warning">Okay</button>
-                </div>
-              </div>';
     }
+
+    // Delete from database
+    if (isset($_SESSION['user_id'])) {
+        $stmt = $conn->prepare("DELETE FROM cart_items WHERE id = ?");
+        $stmt->bind_param("i", $cart_item_id);
+        if ($stmt->execute()) {
+            $_SESSION['message'] = "Item removed successfully!";
+        } else {
+            $_SESSION['message'] = "Error removing item.";
+        }
+    }
+
+    header("Location: cart.php");
+    exit;
 }
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['product_id']) && isset($_POST['quantity'])) {
+    $product_id = (int)$_POST['product_id'];
+    $quantity = (int)$_POST['quantity'];
+
+    // Update quantity in session
+    foreach ($_SESSION['cart'] as &$cart_item) {
+        if ($cart_item['product_id'] == $product_id) {
+            $cart_item['quantity'] = $quantity;
+        }
+    }
+
+    // Update quantity in the database
+    if (isset($_SESSION['user_id'])) {
+        $stmt = $conn->prepare("UPDATE cart_items SET quantity = ? WHERE user_id = ? AND product_id = ?");
+        $stmt->bind_param("iii", $quantity, $_SESSION['user_id'], $product_id);
+        
+        if (!$stmt->execute()) {
+            echo "Error updating database: " . $stmt->error;
+        }
+    }
+
+    exit; // Stop further execution since it's an AJAX request
+}
+
+
+
 // Fetch updated cart
 $cart = $_SESSION['cart'];
 ?>
@@ -123,88 +163,211 @@ $cart = $_SESSION['cart'];
   body {
     padding-top: 80px; /* Adjust based on the height of your navbar */
 }
+/* Set a consistent height for each table row */
+.table tbody tr {
+    height: 100px; /* Adjust as needed */
+    vertical-align: middle;
+}
+
+/* Ensure images are vertically centered and don't stretch */
+.table tbody tr td img {
+    max-height: 80px; /* Adjust based on your needs */
+    width: auto;
+    display: block;
+    margin: auto;
+}
 </style>
-
-
-
-
 
 <div class="container cart-container">
     <div class="row">
         <div class="col-md-8">
             <h3>Your Cart</h3>
-            <form method="POST" action="">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Product Image</th>
-                            <th>Price</th>
-                            <th>Quantity</th>
-                            <th>Subtotal</th>
-                            
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($cart as $index => $item): ?>
+           <!-- Cart Form for Updating Quantities -->
+           <form id="cart-form" action="checkout.php" method="post">
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <td><?php echo htmlspecialchars($item['product_name'] ?? 'Unknown Product'); ?></td>
-                                <td>
-                                    <img src="<?php echo htmlspecialchars($item['image_url'] ?? 'path/to/default-image.jpg'); ?>" 
-                                         alt="<?php echo htmlspecialchars($item['product_name'] ?? 'Image not available'); ?>" 
-                                         style="width: 80px; height: auto; border-radius: 5px;">
-                                </td>
-                                <td>₱<?php echo number_format($item['price'] ?? 0, 2); ?></td>
-                                <td>
-                                    <input type="number" name="quantities[<?php echo $index; ?>]" 
-                                           value="<?php echo $item['quantity'] ?? 1; ?>" 
-                                           min="1" class="form-control" style="width: 80px;">
-                                </td>
-                                <td>₱<?php echo number_format(($item['price'] ?? 0) * ($item['quantity'] ?? 1), 2); ?></td>
-                                <td>
-                                    <a href="?action=delete&index=<?php echo $index; ?>" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></a>
-                                </td>
+                                <th>Select</th>
+                                <th>Product</th>
+                                <th>Image</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Subtotal</th>
+                                <th>Action</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-                <button type="submit" name="update_cart" class="btn btn-outline-warning text-dark">Update Cart</button>
-            </form>
-        </div>
-        <div class="col-md-4">
-    <h4>Cart Totals</h4>
-    <ul class="list-group mb-3">
-        <li class="list-group-item d-flex justify-content-between">
-            <span>Total</span>
-            <strong>
-                ₱<?php echo number_format(array_sum(array_map(function($item) {
-                    return ($item['price'] ?? 0) * ($item['quantity'] ?? 1);
-                }, $cart)), 2); ?>
-            </strong>
-        </li>
-    </ul>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $cart_query = $conn->prepare("SELECT * FROM cart_items WHERE user_id = ?");
+                            $cart_query->bind_param("i", $_SESSION['user_id']);
+                            $cart_query->execute();
+                            $cart_result = $cart_query->get_result();
 
-    <div class="justify-content-between align-items-center mt-4 me-3">
-        <a href="index.php" class="btn btn-secondary btn-dark">Continue Shopping</a>
-        <?php if (!empty($cart)): ?>
-            <form method="POST" action="checkout.php" class="d-inline">
-                <?php foreach ($cart as $item): ?>
-                    <input type="hidden" name="cart[]" value='<?php echo json_encode($item); ?>'>
-                <?php endforeach; ?>
-                <button type="submit" class="btn btn-warning">Proceed to Checkout</button>
+                            while ($item = $cart_result->fetch_assoc()):
+                            ?>
+                                <tr>
+                                <td>
+                                    <input type="checkbox" name="selected_items[]" value="<?php echo $item['id']; ?>" class="product-checkbox">
+                                </td>
+                                    <td><?php echo htmlspecialchars($item['product_name']); ?></td>
+                                    <td><img src="<?php echo htmlspecialchars($item['image']); ?>" style="width: 80px;"></td>
+                                    <td>₱<?php echo number_format($item['price'], 2); ?></td>
+                                    <td>
+                                    <input type="number" 
+                                            name="quantities[<?php echo $item['product_id']; ?>]" 
+                                            value="<?php echo $item['quantity'] ?? 1; ?>" 
+                                            min="1" 
+                                            class="form-control quantity-input" 
+                                            style="width: 80px;"
+                                            data-product-id="<?php echo $item['product_id']; ?>">
+
+                                    </td>
+                                    <td>₱<?php echo number_format(($item['price'] ?? 0) * ($item['quantity'] ?? 1), 2); ?></td>
+                                   
+                                    <td>
+                                        <a href="#" onclick="confirmDelete(<?php echo $item['id']; ?>, '<?php echo htmlspecialchars($item['product_name'], ENT_QUOTES); ?>')" class="btn btn-danger btn-sm">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </td>
+
+                                </tr>
+                            <?php endwhile; ?>
+                            
+                        </tbody>
+                    </table>
+                    
+                </form>
+        </div>
+
+        
+        
+        <div class="col-md-4">
+            <h4>Cart Totals</h4>
+            <ul class="list-group mb-3">
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Total</span>
+                    <strong>
+                        ₱<?php echo number_format(array_sum(array_map(function($item) {
+                            return ($item['price'] ?? 0) * ($item['quantity'] ?? 1);
+                        }, $cart)), 2); ?>
+                    </strong>
+                   
+                </li>
+            </ul> 
+            <ul class="list-group mb-3">
+            <li class="list-group-item d-flex justify-content-between">
+            <span>Selected item total</span>
+                    <strong id="selected-total">₱0.00</strong>
+                </li>
+            </ul> 
+            <form id="checkout-form" action="checkout.php" method="POST">
+            <input type="hidden" name="selected_items" id="selected-items">
+            <button type="submit" class="btn btn-warning" id="checkoutBtn" disabled>Proceed to Checkout</button>
             </form>
-        <?php else: ?>
-            <div class="alert alert-danger text-center mt-3" role="alert">
-                No products in Cart
-            </div>
-        <?php endif; ?>
+
+
+        </div>
     </div>
 </div>
+<!-- Delete Confirmation Modal (Centered) -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"> <!-- Centering the modal -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to remove <strong id="productName"></strong> from your cart?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a id="confirmDeleteBtn" href="#" class="btn btn-danger">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
 <!-- Bootstrap JS + Popper -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+
+
 <script>
-    // JavaScript to update cart totals
-    document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function() {
+    const productCheckboxes = document.querySelectorAll(".product-checkbox");
+    const selectedTotalElement = document.getElementById("selected-total");
+    const checkoutBtn = document.getElementById("checkoutBtn");
+    const selectedItemsInput = document.getElementById("selected-items");
+
+    function updateSelectedTotal() {
+        let selectedTotal = 0;
+        let selectedItems = [];
+
+        productCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const row = checkbox.closest("tr");
+                const price = parseFloat(row.querySelector("td:nth-child(4)").textContent.replace("₱", "").replace(",", ""));
+                const quantity = parseInt(row.querySelector(".quantity-input").value);
+                selectedTotal += price * quantity;
+                selectedItems.push(checkbox.value);
+            }
+        });
+
+        selectedTotalElement.textContent = `₱${selectedTotal.toFixed(2)}`;
+        checkoutBtn.disabled = selectedItems.length === 0;
+        selectedItemsInput.value = selectedItems.join(",");
+    }
+
+    productCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", updateSelectedTotal);
+    });
+
+    document.querySelectorAll(".quantity-input").forEach(input => {
+        input.addEventListener("change", updateSelectedTotal);
+    });
+});
+
+
+
+function confirmDelete(itemId, productName) {
+    // Set the product name in the modal
+    document.getElementById("productName").innerText = productName;
+
+    // Set the delete link dynamically
+    document.getElementById("confirmDeleteBtn").href = "?action=delete&id=" + itemId;
+
+    // Show the modal
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+$(document).ready(function() {
+    $('.quantity-input').on('change', function() {
+        let productID = $(this).data('product-id');
+        let quantity = $(this).val();
+
+        $.ajax({
+            url: "cart.php",  // Same PHP file handling the request
+            method: "POST",
+            data: { product_id: productID, quantity: quantity },
+            success: function(response) {
+                console.log("Cart updated successfully");
+                location.reload();  // Refresh the cart totals
+            },
+            error: function() {
+                console.log("Error updating cart");
+            }
+        });
+    });
+});
+
+
+ document.addEventListener("DOMContentLoaded", function() {
         const quantityInputs = document.querySelectorAll(".quantity-input");
         const cartSubtotal = document.getElementById("cart-subtotal");
         const cartTotal = document.getElementById("cart-total");
@@ -232,6 +395,40 @@ $cart = $_SESSION['cart'];
             input.addEventListener("input", updateCart);
         });
     });
+
+
+    document.addEventListener("DOMContentLoaded", function() {
+    const productCheckboxes = document.querySelectorAll(".product-checkbox");
+    const checkoutBtn = document.getElementById("checkoutBtn");
+    const selectedItemsInput = document.getElementById("selected-items");
+    const checkoutForm = document.getElementById("checkout-form");
+
+    function updateCheckoutButton() {
+        let selectedItems = [];
+        productCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                selectedItems.push(checkbox.value); 
+            }
+        });
+
+        checkoutBtn.disabled = selectedItems.length === 0;
+        selectedItemsInput.value = selectedItems.join(",");
+    }
+
+    productCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", updateCheckoutButton);
+    });
+
+    checkoutForm.addEventListener("submit", function(event) {
+        updateCheckoutButton(); // Ensure data is up-to-date
+        if (checkoutBtn.disabled) {
+            event.preventDefault();
+            alert("Please select at least one item before proceeding to checkout.");
+        }
+    });
+});
+
+
 </script>
 </body>
 </html>

@@ -1,3 +1,6 @@
+<?php
+session_start();
+?>
 
 
 <?php
@@ -15,16 +18,41 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     if ($result->num_rows > 0) {
         $product = $result->fetch_assoc();
     } else {
-        echo "Product not found.";
+        echo "<script>alert('Product not found.'); window.location.href='index.php';</script>";
         exit;
     }
 
     $stmt->close();
     $conn->close();
 } else {
-    echo "Invalid product ID.";
+    echo "<script>alert('Invalid product ID.'); window.location.href='index.php';</script>";
     exit;
 }
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
+    if (isset($_SESSION['user_id'])) {
+        $user_id = $_SESSION['user_id'];
+        $product_id = $_POST['product_id'];
+        $name = $_POST['product_name'];
+        $quantity = $_POST['quantity'];
+        $price = $_POST['price'];
+        $image = $_POST['image_url'];
+
+        // Insert into the database
+        $stmt = $conn->prepare("INSERT INTO cart_items (user_id, product_id, product_name, quantity, price, image) 
+                                VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("iisids", $user_id, $product_id, $name, $quantity, $price, $image);
+        $stmt->execute();
+
+        // Redirect to cart
+        $success_message = "Item added to cart successfully!";
+        exit;
+    } else {
+        header("Location: main/user_login.php");
+        exit;
+    }
+}
+
 ?>
 
 
@@ -141,9 +169,11 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
   <title><?php echo htmlspecialchars($product['product_name']); ?> - Quick View</title>
 </head>
 <body>
+  
 <?php 
      include 'navbar.php'; 
      ?>
+     
   <div class="container my-5">
     <div class="row product-section">
         <!-- Product Image -->
@@ -194,7 +224,8 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
             <!-- Delivery Time -->
             <p class="text-muted"><i class="bi bi-truck"></i> Delivery in 3-5 business days</p>
             <!-- Select Options -->
-            <form>
+            <form action="cart.php" method="POST">
+           
                 <div class="mb-3">
                     <label for="color" class="form-label">Color:</label>
                     <select class="form-select" id="color" name="color">
@@ -206,20 +237,31 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
                 </div>
                 <div class="mb-3">
                     <label for="quantity" class="form-label">Quantity:</label>
-                    <input type="number" class="form-control" id="quantity" name="quantity" min="1" value="1">
+
+                    <p class="small text-muted mb-0" style="margin-top: 15px;" >Stock: 
+                  <?php echo $product['stock'] > 0 ? $product['stock'] : '<span class="text-danger">Out of Stock</span>'; ?>
+                </p>
                 </div>
                 <!-- Buttons -->
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-warning flex-grow-1">
-                        <i class="bi bi-cart-plus btn-icon" a href="/user_account/submit_rating.php"></i>Add to Cart
-                    </button>
+                
+                  <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
+                  <input type="hidden" name="product_name" value="<?php echo $product['product_name']; ?>">
+                  <input type="hidden" name="price" value="<?php echo $product['discounted_price']; ?>">
+                  <input type="hidden" name="quantity" value="1">
+                  <input type="hidden" name="image_url" value="<?php echo $product['image_url']; ?>">
+                  <input type="hidden" name="add_to_cart" value="1">
+                  <button class="btn btn-warning flex-grow-1" type="submit" 
+                    <?php echo $product['stock'] <= 0 ? 'disabled' : ''; ?>>
+                    <i class="fas fa-shopping-cart"></i> Add to Cart
+                  </button>
                     <button type="button" class="btn btn-dark flex-grow-1">
                         <i class="bi bi-bag-check btn-icon" a href="checkout.php"></i>Checkout
                     </button>
-                </div>
-            </form>
+                
+            </form>	
         </div>
-        
+        </div>
     </div>
     <h3 class="mt-3 ml-4">Product Reviews:</h3>
 <div class="mt-3" style="font-size: 0.8rem;" id="review_content">
@@ -227,6 +269,21 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 </div>
 </div>
 
+<!-- Added to Cart Modal -->
+<div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="cartModalLabel">Success</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <i class="fas fa-check-circle text-success" style="font-size: 2rem;"></i>
+        <p class="mt-2">Item added to cart successfully!</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 
@@ -238,6 +295,22 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
 <script>
+  
+  
+document.querySelector('.btn-warning').addEventListener('click', function() {
+    let product_id = <?php echo json_encode($product['id']); ?>;
+    fetch('cart.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `product_id=${product_id}&quantity=1&add_to_cart=1`
+    }).then(response => response.text())
+    
+      .catch(error => console.error('Error:', error));
+})
+
+
+
+
 $(document).ready(function(){
     
     var product_id = $('[data-product-id]').data('product-id');
@@ -275,7 +348,7 @@ $(document).ready(function(){
                 $('.total_three_star_review').text(data.three_star_review);
                 $('.total_two_star_review').text(data.two_star_review);
                 $('.total_one_star_review').text(data.one_star_review);
-
+                
                 // Update progress bars
                 if(data.total_review > 0){
                     $('#five_star_progress').css('width', (data.five_star_review / data.total_review) * 100 + '%');

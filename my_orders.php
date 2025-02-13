@@ -53,9 +53,6 @@ $result = $stmt->get_result();
                     <div class="col-sm-3 text-center">
                         <button type="button" name="add_review" class="btn btn-primary form-control mt-3 add_review_btn">Rate/Review This Product</button>
                     </div>
-    
-
-
                 </div>
                 <div class="card-body">
                     <div class="row align-items-center">
@@ -195,9 +192,9 @@ $result = $stmt->get_result();
     </script>
 
 
-
                         <div class="col-md-6">
                             <h5 class="card-title"><?php echo htmlspecialchars($order['product_name']); ?></h5>
+                            
                             <p class="text-muted mb-1"><strong>Payment Method:</strong> <?php echo htmlspecialchars($order['payment_method']); ?></p>
                             <p class="text-muted mb-0"><strong>Voucher Used:</strong> <?php echo htmlspecialchars($order['voucher_used'] ? $order['voucher_used'] : 'None'); ?></p>
                         </div>
