@@ -9,7 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
     <div class="container">
         <!-- Logo and Title -->
-        <a class="navbar-brand d-flex align-items-center" href="../index.php">
+        <a class="navbar-brand d-flex align-items-center" href="index.php">
             <img src="images/logo-removebg-preview.png" alt="Logo" class="me-2" style="height: 40px;">
             <span class="fw-bold" style="color: #333; font-size: 22px;">
                 Great Wall <span style="color: #ffb100;">Arts</span>
