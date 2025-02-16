@@ -3,30 +3,39 @@
 ?>
 
 <?php
-// Fetch all products initially
-$sql = "SELECT * FROM products"; 
+
+// Include database connection
+
+
+// Fetch products with sold count
+$sql = "SELECT p.*, 
+        COALESCE(SUM(o.total_products), 0) AS sold 
+        FROM products p
+        LEFT JOIN orders o ON p.id = o.product_id
+        GROUP BY p.id";
+
 $result = $conn->query($sql);
 
 $products = [];
 if ($result->num_rows > 0) {
-    // Fetch all rows as an associative array
     $products = $result->fetch_all(MYSQLI_ASSOC);
 } else {
     echo "No products found.";
 }
 
-//search
+// Search functionality
 if (isset($_POST['search_box'])) {
     $search_box = trim($_POST['search_box']);
-    $stmt = $conn->prepare("SELECT * FROM `products` WHERE `product_name` LIKE ?");
+    $stmt = $conn->prepare("SELECT * FROM products WHERE product_name LIKE ?");
     $search_term = '%' . $search_box . '%';
     $stmt->bind_param('s', $search_term);
     $stmt->execute();
     $result = $stmt->get_result();
 
+    echo "<h3>Search Results:</h3>";
     if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
-            echo $row['product_name'] . '<br>';
+            echo $row['product_name'] . " - Sold: " . $row['sold'] . "<br>";
         }
     } else {
         echo "No products match your search."; 
@@ -35,9 +44,12 @@ if (isset($_POST['search_box'])) {
     $stmt->close();
 }
 
-// Close the connection at the very end
+// Close connection
 $conn->close();
+
 ?>
+
+
 
 
 
@@ -106,8 +118,8 @@ $conn->close();
 
 
   <?php
-   include "navbar.php"; ?>
-   <?php include "chatbot.html"; ?>
+   include 'home/navbar.php'; ?>
+   <?php include "home/chatbot.html"; ?>
 <div class="container my-5">
   <div class="row align-items-start">
     <!-- Main Banner Section with Slide -->
@@ -234,42 +246,42 @@ $conn->close();
 <div class="d-flex justify-content-center flex-wrap mt-5">
   <!-- Category 1 -->
   <div class="category-item mx-4">
-    <a href="category-dairy.html" class="text-decoration-none text-center">
+    <a href="home/category.php?name=Tumbler" class="text-decoration-none text-center">
       <img src="images/tumbler (1).png" alt="Tumbler">
       <p>Tumbler</p>
     </a>
   </div>
   <!-- Category 2 -->
   <div class="category-item mx-4">
-    <a href="category-fruits.html" class="text-decoration-none text-center">
+    <a href="home/category.php?name=Powerbank" class="text-decoration-none text-center">
       <img src="images/powerbank (1).png" alt="Powerbank">
       <p>Powerbank</p>
     </a>
   </div>
   <!-- Category 3 -->
   <div class="category-item mx-4">
-    <a href="category-snacks.html" class="text-decoration-none text-center">
+    <a href="home/category.php?name=Mini fan" class="text-decoration-none text-center">
       <img src="images/air.png" alt="Mini Fan">
       <p>Mini Fan</p>
     </a>
   </div>
   <!-- Category 4 -->
   <div class="category-item mx-4">
-    <a href="category-bakery.html" class="text-decoration-none text-center">
+    <a href="home/category.php?name=Gift Set" class="text-decoration-none text-center">
       <img src="images/gift.png" alt="Gif Set">
       <p>Gift Set</p>
     </a>
   </div>
   <!-- Category 5 -->
   <div class="category-item mx-4">
-    <a href="category-instant.html" class="text-decoration-none text-center">
+    <a href="home/category.php?name=Table" class="text-decoration-none text-center">
       <img src="images/table (1).png" alt="Table">
       <p>Table</p>
     </a>
   </div>
   <!-- Category 6 -->
   <div class="category-item mx-4">
-    <a href="category-drinks.html" class="text-decoration-none text-center">
+    <a href="home/category.php?name=Utensils" class="text-decoration-none text-center">
       <img src="images/cutlery.png" alt="Wooden Utensils">
       <p>Utensils</p>
     </a>
@@ -321,7 +333,7 @@ $conn->close();
       <?php foreach ($products as $product): ?>
         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
           <div class="card shadow-sm h-100">
-            <a href="quick_view.php?id=<?php echo $product['id']; ?>">
+            <a href="home/quick_view.php?id=<?php echo $product['id']; ?>">
               <img 
                 src="<?php echo $product['image_url']; ?>" 
                 class="card-img-top img-fluid" 
@@ -501,8 +513,25 @@ $conn->close();
     text-align: center;
     margin-bottom: 40px;
   }
+  
   </style>
-
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel">Login Required</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                You need to log in first to continue. Do you want to go to the login page?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="../main/user_login.php" class="btn btn-primary">Yes, Login</a>
+            </div>
+        </div>
+    </div>
+</div>
   <script>
     // Animation on scroll
     document.addEventListener('DOMContentLoaded', () => {
@@ -540,8 +569,9 @@ $conn->close();
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
-    <?php require ('footer.php'); ?>
+    <?php require ('home/footer.php'); ?>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/cart.js"></script>
 </body>
+</html>

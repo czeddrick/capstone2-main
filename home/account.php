@@ -1,5 +1,5 @@
 <?php
- include "db/connect.php";
+ include "../db/connect.php";
  include "navbar.php";
  
 ?>
@@ -187,7 +187,6 @@ function addToCart(button) {
 
 
 <?php
-include 'db/connect.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search_box'])) {
   $search_box = trim($_POST['search_box']);
 
@@ -223,7 +222,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search_box'])) {
                     <a href="../my_account.php" class="list-group-item list-group-item-action  bg-dark text-white">
                         <i class="fas fa-user"></i> My Account
                     </a>
-                    <a href="<?php echo BASE_URL; ?>user_account/user_purchased.php" class="list-group-item list-group-item-action">
+                    <a href="<?php echo BASE_URL; ?>home/user_purchased.php" class="list-group-item list-group-item-action">
                         <i class="fas fa-shopping-cart"></i> Orders
                     </a>
 
@@ -236,10 +235,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search_box'])) {
                     <a href="#" class="list-group-item list-group-item-action">
                         <i class="fas fa-tag"></i> My Vouchers
                     </a>
-                    <a href="#" class="list-group-item list-group-item-action">
-                        <i class="fas fa-heart"></i> My Wishlist
-                        
-                    <a href="user_account/settings.php" class="list-group-item list-group-item-action">
+                   
+                    <a href="../user_account/settings.php" class="list-group-item list-group-item-action">
                         <i class="fas fa-cog"></i> Settings
                     </a>
                     <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#logoutModal">
@@ -262,7 +259,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search_box'])) {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <a href="db/logout.php" class="btn btn-danger">Logout</a>
+                <a href="../db/logout.php" class="btn btn-danger">Logout</a>
             </div>
         </div>
     </div>

@@ -1,3 +1,15 @@
+
+<?php 
+session_start(); // Start session to get user details
+
+// Assuming you store user details in session variables
+$full_name = isset($_SESSION['full_name']) ? $_SESSION['full_name'] : '';
+$email = isset($_SESSION['email']) ? $_SESSION['email'] : '';
+
+ 
+?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -105,24 +117,26 @@
                 <div class="contact-container p-4">
                     <div class="contact-header">Send Us a Message</div>
                     <form class="p-4">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Name</label>
-                            <input type="text" class="form-control" id="name" placeholder="Your name">
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" placeholder="Your email">
-                        </div>
-                        <div class="mb-3">
-                            <label for="subject" class="form-label">Subject</label>
-                            <input type="text" class="form-control" id="subject" placeholder="Subject">
-                        </div>
-                        <div class="mb-3">
-                            <label for="message" class="form-label">Message</label>
-                            <textarea class="form-control" id="message" rows="5" placeholder="Write your message"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-custom w-100">Send</button>
-                    </form>
+    <div class="mb-3">
+        <label for="name" class="form-label">Name</label>
+        <input type="text" class="form-control" id="name" name="name" value="<?php echo htmlspecialchars($full_name); ?>" <?php echo $full_name ? 'readonly' : ''; ?>>
+    </div>
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" <?php echo $email ? 'readonly' : ''; ?>>
+    </div>
+    <div class="mb-3">
+        <label for="subject" class="form-label">Subject</label>
+        <input type="text" class="form-control" id="subject" placeholder="Subject">
+    </div>
+    <div class="mb-3">
+        <label for="message" class="form-label">Message</label>
+        <textarea class="form-control" id="message" rows="5" placeholder="Write your message"></textarea>
+    </div>
+    <button type="submit" class="btn btn-custom w-100">Send</button>
+</form>
+
+
                 </div>
             </div>
         </div>

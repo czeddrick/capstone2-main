@@ -1,7 +1,7 @@
 <?php
 include '../db/connect.php';
 session_start();
-include "../navbar.php"; 
+include "../home/navbar.php"; 
 // Ensure admin is logged in
 
 

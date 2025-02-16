@@ -10,7 +10,7 @@
 </head>
 <body>
 <?php
-include 'db/connect.php';
+include '../db/connect.php';
 include "navbar.php";
 
 
@@ -202,7 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                     <?php foreach ($cart as $item): ?>
                         <tr>
                             <td><?php echo htmlspecialchars($item['product_name']); ?></td>
-                            <td><img src="<?php echo htmlspecialchars($item['image']); ?>" style="width: 80px;"></td>
+                            <td><img src="<?php echo BASE_URL . htmlspecialchars($item['image']); ?>" style="width: 80px;"></td>
                             <td>₱<?php echo number_format($item['price'], 2); ?></td>
                             <td><?php echo htmlspecialchars($item['quantity']); ?></td>
                             <td>₱<?php echo number_format($item['price'] * $item['quantity'], 2); ?></td>

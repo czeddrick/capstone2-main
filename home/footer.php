@@ -1,3 +1,7 @@
+<?php 
+include 'confignav.php';
+?>
+
 <style>footer {
   font-family: 'Poppins', sans-serif;
   background: rgb(255,245,210);
@@ -54,6 +58,21 @@ footer .text-center h6 {
   margin: 0;
 }
 
+html, body {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1; /* Pushes the footer down */
+}
+
+footer {
+  margin-top: auto; /* Keeps the footer at the bottom */
+}
+
 </style>
 
 
@@ -62,7 +81,7 @@ footer .text-center h6 {
     <div class="row">
       <!-- About Section -->
       <div class="col-lg-3">
-        <img src="images/log.png" alt="Logo" style="height: 70px; width:100px;">
+        <img src="<?php echo BASE_URL; ?>images/log.png" alt="Logo" style="height: 70px; width:100px;">
         <h3 class="fw-bold fs-4 mb-2">GREAT WALL ARTS</h3>
         <p>
           Established in 2018 by a born-again Christian couple to produce Filipino-made handcrafted products, GWA uses the latest technology to personalize items to meet customer standards.
@@ -78,9 +97,8 @@ footer .text-center h6 {
       <div class="col-lg-2">
         <h5>Links</h5>
         <a href="index.php" class="d-block">Home</a>
-        <a href="main/products.php" class="d-block">Products</a>
-        <a href="main/contact.php" class="d-block">Contact Us</a>
-        <a href="main/about.php" class="d-block">About</a>
+        <a href="<?php echo BASE_URL; ?>home/products.php" class="d-block">Products</a>
+        <a href="<?php echo BASE_URL; ?>home/contact.php" class="d-block">Contact Us</a>
       </div>
 
       <!-- About Section -->
@@ -96,10 +114,8 @@ footer .text-center h6 {
       <!-- My Account Section -->
       <div class="col-lg-2">
         <h5>My Account</h5>
-        <a href="#" class="d-block">Sign In</a>
-        <a href="#" class="d-block">View Cart</a>
-        <a href="#" class="d-block">My Wishlist</a>
-        <a href="#" class="d-block">Track My Order</a>
+        <a href="<?php echo BASE_URL; ?>home/cart.php" class="d-block">View Cart</a>
+        <a href="<?php echo BASE_URL; ?>home/user_purchased.php" class="d-block">Order</a>
         <a href="#" class="d-block">Help</a>
       </div>
 
@@ -107,7 +123,7 @@ footer .text-center h6 {
       <div class="col-lg-3">
         <h5>Secured Payment Gateways</h5>
         <div class="payment-icons">
-          <img src="images/pay.png" alt="Payment Methods" class="img-fluid">
+          <img src="<?php echo BASE_URL; ?>images/pay.png" alt="Payment Methods" class="img-fluid">
         </div>
       </div>
     </div>

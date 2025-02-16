@@ -1,5 +1,5 @@
 <?php
-include 'db/connect.php'; // Include your database connection
+include '../db/connect.php'; // Include your database connection
 
 // Check if the search term is provided
 if (isset($_GET['search_box'])) {
@@ -130,12 +130,12 @@ $conn->close(); // Close the connection
         <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
           <div class="card shadow-sm h-100">
             <a href="quick_view.php?id=<?php echo $product['id']; ?>">
-              <img 
-                src="<?php echo $product['image_url']; ?>" 
-                class="card-img-top img-fluid" 
-                alt="<?php echo $product['product_name']; ?>"
-                style="height: 250px; object-fit: cover;"
-              >
+            <img 
+                    src="<?php echo BASE_URL . $product['image_url']; ?>" 
+                    class="card-img-top img-fluid" 
+                    alt="<?php echo $product['product_name']; ?>"
+                    style="height: 250px; object-fit: cover;"
+                >
             </a>
             <div class="card-body d-flex flex-column justify-content-between text-center">
               <h5 class="card-title text-truncate"> <?php echo $product['product_name']; ?> </h5>

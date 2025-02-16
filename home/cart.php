@@ -19,7 +19,7 @@
 <?php endif; ?>
 
 <?php
-include "db/connect.php";
+include "../db/connect.php";
 
 // Start session if not already started
 if (session_status() == PHP_SESSION_NONE) {
@@ -78,11 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
         $_SESSION['cart'] = $result->fetch_all(MYSQLI_ASSOC);
 
         // Set session variable for modal display
-        $_SESSION['added_to_cart'] = true;
+        $_SESSION['addedtocartModal'] = true;
+header("Location: quick_view.php?id=" . $product_id);
+exit;
 
-        // Redirect to prevent form resubmission
-        header("Location: " . $_SERVER['HTTP_REFERER']);
-        exit;
     } else {
         header("Location: main/user_login.php");
         exit;
@@ -160,8 +159,38 @@ $cart = $_SESSION['cart'];
 <?php include "navbar.php"; ?>
 
 <style>
+.empty-cart-message {
+  text-align: center;
+  font-size: 18px;
+  color: #333;
+  margin-top: 200px;
+}
+
+.empty-cart-message p {
+  font-size: 22px;
+  color:rgb(0, 0, 0); /* Tomato red color */
+}
+
+.empty-cart-message .btn {
+  margin-top: 15px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #FF6347; /* Button color */
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.empty-cart-message .btn:hover {
+  background-color:rgb(97, 41, 21); /* Darker red when hovering */
+}
+
+
+
+
   body {
-    padding-top: 80px; /* Adjust based on the height of your navbar */
+    padding-top: 100px; /* Adjust based on the height of your navbar */
 }
 /* Set a consistent height for each table row */
 .table tbody tr {
@@ -182,8 +211,25 @@ $cart = $_SESSION['cart'];
     <div class="row">
         <div class="col-md-8">
             <h3>Your Cart</h3>
-           <!-- Cart Form for Updating Quantities -->
-           <form id="cart-form" action="checkout.php" method="post">
+            <?php
+            // Query the cart items
+            $cart_query = $conn->prepare("SELECT * FROM cart_items WHERE user_id = ?");
+            $cart_query->bind_param("i", $_SESSION['user_id']);
+            $cart_query->execute();
+            $cart_result = $cart_query->get_result();
+
+            // Check if the cart is empty
+            if ($cart_result->num_rows == 0) {
+                // Display the empty cart message
+              // Display the empty cart message
+    echo "<div class='empty-cart-message'>";
+    echo "<p>Your cart is currently empty.</p>";
+    echo "<a href='../home/products.php' class='btn'>Shop Now</a>";
+    echo "</div>";
+            } else {
+            ?>
+                <!-- Cart Form for Updating Quantities -->
+                <form id="cart-form" action="checkout.php" method="post">
                     <table class="table">
                         <thead>
                             <tr>
@@ -197,47 +243,38 @@ $cart = $_SESSION['cart'];
                             </tr>
                         </thead>
                         <tbody>
-                            <?php
-                            $cart_query = $conn->prepare("SELECT * FROM cart_items WHERE user_id = ?");
-                            $cart_query->bind_param("i", $_SESSION['user_id']);
-                            $cart_query->execute();
-                            $cart_result = $cart_query->get_result();
-
-                            while ($item = $cart_result->fetch_assoc()):
-                            ?>
+                            <?php while ($item = $cart_result->fetch_assoc()): ?>
                                 <tr>
-                                <td>
-                                    <input type="checkbox" name="selected_items[]" value="<?php echo $item['id']; ?>" class="product-checkbox">
-                                </td>
+                                    <td>
+                                        <input type="checkbox" name="selected_items[]" value="<?php echo $item['id']; ?>" class="product-checkbox">
+                                    </td>
                                     <td><?php echo htmlspecialchars($item['product_name']); ?></td>
-                                    <td><img src="<?php echo htmlspecialchars($item['image']); ?>" style="width: 80px;"></td>
+                                    <td><img src="<?php echo BASE_URL . htmlspecialchars($item['image']); ?>" style="width: 80px;"></td>
                                     <td>₱<?php echo number_format($item['price'], 2); ?></td>
                                     <td>
-                                    <input type="number" 
-                                            name="quantities[<?php echo $item['product_id']; ?>]" 
-                                            value="<?php echo $item['quantity'] ?? 1; ?>" 
-                                            min="1" 
-                                            class="form-control quantity-input" 
-                                            style="width: 80px;"
-                                            data-product-id="<?php echo $item['product_id']; ?>">
-
+                                        <input type="number" 
+                                               name="quantities[<?php echo $item['product_id']; ?>]" 
+                                               value="<?php echo $item['quantity'] ?? 1; ?>" 
+                                               min="1" 
+                                               class="form-control quantity-input" 
+                                               style="width: 80px;"
+                                               data-product-id="<?php echo $item['product_id']; ?>">
                                     </td>
                                     <td>₱<?php echo number_format(($item['price'] ?? 0) * ($item['quantity'] ?? 1), 2); ?></td>
-                                   
                                     <td>
                                         <a href="#" onclick="confirmDelete(<?php echo $item['id']; ?>, '<?php echo htmlspecialchars($item['product_name'], ENT_QUOTES); ?>')" class="btn btn-danger btn-sm">
                                             <i class="fas fa-trash-alt"></i>
                                         </a>
                                     </td>
-
                                 </tr>
                             <?php endwhile; ?>
-                            
                         </tbody>
                     </table>
-                    
                 </form>
+            <?php } ?>
         </div>
+                     
+
 
         
         
@@ -288,7 +325,23 @@ $cart = $_SESSION['cart'];
     </div>
 </div>
 
-
+<div class="modal fade" id="addToCartModal" tabindex="-1" aria-labelledby="addToCartModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addToCartModalLabel">Item Added to Cart</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>The item has been successfully added to your cart.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Shopping</button>
+                <a href="cart.php" class="btn btn-primary">Go to Cart</a>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Bootstrap JS + Popper -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -298,6 +351,7 @@ $cart = $_SESSION['cart'];
 
 
 <script>
+
 document.addEventListener("DOMContentLoaded", function() {
     const productCheckboxes = document.querySelectorAll(".product-checkbox");
     const selectedTotalElement = document.getElementById("selected-total");

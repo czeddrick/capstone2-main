@@ -15,7 +15,7 @@
     <style>
         body {
             background-color: #f8f9fa;
-            padding-top: 70px;
+            padding-top: 60px;
         }
         .card {
             border: none;
@@ -78,13 +78,12 @@
 <body>
 <?php
 // Include navbar and database connection
-include '../navbar.php';
+include 'navbar.php';
 include '../db/connect.php';
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit;
+   
 }
 $sql = "SELECT first_name FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
@@ -106,7 +105,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 ?>
 <div class="container my-5">
-    <h1 class="mb-4 text-center">My Orders</h1>
+    <h1 class="mb-4 text-center">Orders</h1>
     <?php if ($result->num_rows > 0): ?>
         <?php while ($order = $result->fetch_assoc()): ?>
             <div class="card mb-4" data-product-id="<?= $fetch_order['product_id']; ?>">

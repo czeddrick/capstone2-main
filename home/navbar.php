@@ -4,13 +4,13 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
     
 }
-
+include 'confignav.php';
 ?>
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
     <div class="container">
         <!-- Logo and Title -->
         <a class="navbar-brand d-flex align-items-center" href="index.php">
-            <img src="images/logo-removebg-preview.png" alt="Logo" class="me-2" style="height: 40px;">
+            <img src="<?php echo BASE_URL; ?>images/logo-removebg-preview.png" alt="Logo" class="me-2" style="height: 40px;">
             <span class="fw-bold" style="color: #333; font-size: 22px;">
                 Great Wall <span style="color: #ffb100;">Arts</span>
             </span>
@@ -28,10 +28,10 @@ if (session_status() === PHP_SESSION_NONE) {
                     <a class="nav-link fw-bold text-dark" href="<?php echo BASE_URL; ?>index.php">Home</a>
                 </li>
                 <li class="nav-item me-4">
-                    <a class="nav-link fw-bold text-dark" href="<?php echo BASE_URL; ?>products.php">Products</a>
+                    <a class="nav-link fw-bold text-dark" href="<?php echo BASE_URL; ?>home/products.php">Products</a>
                 </li>
                 <li class="nav-item me-4">
-                    <a class="nav-link fw-bold text-dark" href="<?php echo BASE_URL; ?>contact.php">Contact</a>
+                    <a class="nav-link fw-bold text-dark" href="<?php echo BASE_URL; ?>home/contact.php">Contact</a>
                 </li>
                 
 
@@ -93,19 +93,19 @@ if (session_status() === PHP_SESSION_NONE) {
 </li>
             <?php if (isset($_SESSION['user_id'])): ?>               
                 <li class="nav-item me-3">
-                    <a class="nav-link text-dark" href="<?php echo BASE_URL; ?>user_account/user_purchased.php" aria-label="Orders">
+                    <a class="nav-link text-dark" href="<?php echo BASE_URL; ?>home/user_purchased.php" aria-label="Orders">
                         <i class="fas fa-shopping-bag fs-5"></i>
                     </a>
                 </li>
             <?php else: ?>
-                <a href="main/user_login.php" class="btn">
-                    <i class="fas fa-shopping-bag fs-5"></i> 
-                </a>
+                <a class="nav-link text-dark" href="<?php echo BASE_URL; ?>home/user_purchased.php" aria-label="Orders">
+                        <i class="fas fa-shopping-bag fs-5"></i>
+                    </a>
             <?php endif; ?>
 
                 <li class="nav-item me-3 position-relative">
 
-    <a class="nav-link text-dark" href="<?php echo BASE_URL; ?>cart.php" aria-label="Cart">
+    <a class="nav-link text-dark" href="<?php echo BASE_URL; ?>home/cart.php" aria-label="Cart">
         <i class="fas fa-shopping-cart fs-5"></i>
         <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
             
@@ -114,6 +114,12 @@ if (session_status() === PHP_SESSION_NONE) {
 </li>
 
 <script>
+function alertLogin() {
+    alert("You need to log in first!");
+     // Redirect after alert
+}
+
+
 let cartCount = 0;
 
 function addToCart(button) {
@@ -184,18 +190,18 @@ function addToCart(button) {
                         </span>
                     </li>
                     <li class="nav-item ms-3">
-                        <a class="btn btn-warning text-darkfw-bold" href="<?php echo BASE_URL; ?>account.php">
+                        <a class="btn btn-warning text-darkfw-bold" href="<?php echo BASE_URL; ?>home/account.php">
                             <i class="fas fa-user-circle me-2"></i>My Account
                         </a>
                     </li>
                 <?php else: ?>
                     <li class="nav-item ms-3">
-                        <a class="btn btn-outline-warning fw-bold" href="main/user_login.php">
+                        <a class="btn btn-outline-warning fw-bold" href="<?php echo BASE_URL; ?>main/user_login.php">
                             <i class="fas fa-sign-in-alt me-2"></i>Login
                         </a>
                     </li>
                     <li class="nav-item ms-3">
-                        <a class="btn btn-outline-dark fw-bold" href="main/register.php">
+                        <a class="btn btn-outline-dark fw-bold" href="<?php echo BASE_URL; ?>main/register.php">
                             <i class="fas fa-user-plus me-2"></i>Sign Up
                         </a>
                     </li>
@@ -300,9 +306,9 @@ function addToCart(button) {
 }
   </style>
  
-<script src="js/cart.js"></script>
+<script src="../js/cart.js"></script>
 <?php
-include 'db/connect.php';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search_box'])) {
   $search_box = trim($_POST['search_box']);
 
