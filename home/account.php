@@ -329,7 +329,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search_box'])) {
                     <i class="fas fa-box-open fa-2x"></i>
                     <p class="mb-0">To Ship</p>
                 </div>
-                <div class="status-tab text-center flex-fill mx-2 py-2 rounded bg-info text-white" data-status="shipped">
+                <div class="status-tab text-center flex-fill mx-2 py-2 rounded bg-info text-white" data-status="processing">
                     <i class="fas fa-truck fa-2x"></i>
                     <p class="mb-0">Processing</p>
                 </div>

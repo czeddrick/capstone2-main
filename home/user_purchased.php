@@ -140,7 +140,7 @@ $user = $result->fetch_assoc();
 
 
 // Fetch orders for the logged-in user
-$user_id = $_SESSION['user_id'];
+
 $sql = "SELECT id, product_name, product_id, image, color, payment_method, voucher_used, total_products, total_price, placed_on, status 
         FROM orders 
         WHERE user_id = ? AND status = 'received' 
@@ -619,6 +619,7 @@ $(document).ready(function() {
                 $('#user_review').val('');
                 rating_data = 0;
                 reset_background();
+                location.reload();
                 alert(response);
             },
             error: function(xhr, status, error) {
