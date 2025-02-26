@@ -173,6 +173,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
         
   </style>
   <title><?php echo htmlspecialchars($product['product_name']); ?> - Quick View</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
 </head>
 <body>
   
@@ -231,16 +233,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
             <p class="text-muted"><i class="bi bi-truck"></i> Delivery in 3-5 business days</p>
             <!-- Select Options -->
             <form action="cart.php" method="POST">
-           
-                <div class="mb-3">
+            <?php
+                
+
+                $product; // Replace with the actual product ID
+
+                // Prepare the statement
+                $stmt = $conn->prepare("SELECT color FROM products WHERE id = ?");
+                $stmt->bind_param("i", $product_id);
+                $stmt->execute();
+                $stmt->bind_result($color);
+                $stmt->fetch();
+                $stmt->close();
+
+                if (!empty($color)):
+                    $available_colors = explode(',', $color); // Split multiple colors if stored as "red,blue,green"
+                ?>
+                   <div class="mb-3">
                     <label for="color" class="form-label">Color:</label>
-                    <select class="form-select" id="color" name="color">
-                        <option selected>Select a color</option>
-                        <option value="black">Black</option>
-                        <option value="white">White</option>
-                        <option value="red">Red</option>
+                    <select class="form-select" id="color" name="color" required>
+                        <?php 
+                        $available_colors = explode(',', $product['color']); // Get colors from DB
+                        $first_color = trim($available_colors[0]); // Get the first color
+                        
+                        foreach ($available_colors as $color): 
+                            $color = trim($color); // Trim spaces
+                        ?>
+                            <option value="<?= $color ?>" <?= $color == $first_color ? 'selected' : '' ?>>
+                                <?= ucfirst($color) ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
+
+                <?php endif; ?>
+
+                <?php $conn->close(); ?>
                 <div class="mb-3">
                     <label for="quantity" class="form-label">Quantity:</label>
 
@@ -266,13 +294,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
                     </button>
                 
             </form>	
-        </div>
-        </div>
+        </div>          
     </div>
-    <h3 class="mt-3 ml-4">Product Reviews:</h3>
-<div class="mt-3" style="font-size: 0.8rem;" id="review_content">
-    <!-- Reviews will be loaded here -->
-</div>
+            <?php
+                include '../db/connect.php';
+                $product; // Replace with dynamic ID if needed
+                $sql = "SELECT descript FROM products WHERE id = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("i", $product_id);
+                $stmt->execute();
+                $stmt->bind_result($description);
+                $stmt->fetch();
+                $stmt->close();
+
+                ?>
+                 <hr class="my-4">
+                    <div class="mt-3" style="font-size: 0.9rem;">
+                        <h4 class="ml-4">Product Description:</h4>
+                        <p class="ml-4" style="font-family: 'Poppins', sans-serif; font-size: 15px; line-height: 1.8;">
+                            <?php echo nl2br(htmlspecialchars($description)); ?>
+                        </p>
+
+                    </div>
+                <?php $conn->close(); ?>
+        </div>
+         <h3 class="mt-3 ml-4">Product Reviews:</h3>
+    <div class="mt-3" style="font-size: 0.8rem;" id="review_content">
+                    <!-- Reviews will be loaded here -->
+    </div>
 </div>
 
 <!-- Login Required Modal -->

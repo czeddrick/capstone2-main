@@ -98,7 +98,7 @@ $conn->close();
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-12 col-md-8">
-                <form method="GET" action="search_results.php" class="d-flex w-100">
+                <form method="GET" action="home/search_results.php" class="d-flex w-100">
                     <input 
                         type="text" 
                         name="search_box" 
@@ -556,14 +556,6 @@ $conn->close();
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-  
-
-
-  <div class="form">
-    <input type="text" placeholder="Your email address">
-    <button class="normal1">Sign Up</button>
-  </div>
 </section>
 
 

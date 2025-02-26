@@ -4,9 +4,29 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
     
 }
-include 'confignav.php';
+
+
+
+
+// Ensure user is logged in
+$user_id = $_SESSION['user_id'] ?? 0;
+$cart_count = 0;
+
+if ($user_id) {
+    $query = "SELECT SUM(quantity) AS total_items FROM cart_items WHERE user_id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($row = $result->fetch_assoc()) {
+        $cart_count = $row['total_items'] ?? 0;
+    }
+}
+
+
 ?>
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3 fixed-top">
     <div class="container">
         <!-- Logo and Title -->
         <a class="navbar-brand d-flex align-items-center" href="index.php">
@@ -29,6 +49,9 @@ include 'confignav.php';
                 </li>
                 <li class="nav-item me-4">
                     <a class="nav-link fw-bold text-dark" href="<?php echo BASE_URL; ?>home/products.php">Products</a>
+                </li>
+                <li class="nav-item me-4">
+                    <a class="nav-link fw-bold text-dark" href="<?php echo BASE_URL; ?>home/eco_friendly.php">Eco Friendly</a>
                 </li>
                 <li class="nav-item me-4">
                     <a class="nav-link fw-bold text-dark" href="<?php echo BASE_URL; ?>home/contact.php">Contact</a>
@@ -105,69 +128,31 @@ include 'confignav.php';
 
                 <li class="nav-item me-3 position-relative">
 
-    <a class="nav-link text-dark" href="<?php echo BASE_URL; ?>home/cart.php" aria-label="Cart">
-        <i class="fas fa-shopping-cart fs-5"></i>
-        <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
-            
-        </span>
-    </a>
+            <!-- Cart Icon in Navbar -->
+            <a class="nav-link text-dark" href="<?php echo BASE_URL; ?>home/cart.php" aria-label="Cart">
+                <i class="fas fa-shopping-cart fs-5"></i>
+                <span id="cart-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
+                    <?php echo $cart_count; ?>
+                </span>
+            </a>
 </li>
 
 <script>
-function alertLogin() {
-    alert("You need to log in first!");
-     // Redirect after alert
+function updateCartCount() {
+    fetch(window.location.href, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "fetch_cart_count=1"
+    })
+    .then(response => response.json())
+    .then(data => {
+        let cartBadge = document.getElementById("cart-count");
+        cartBadge.textContent = data.cart_count; // Always display a number, even if it's 0
+    })
+    .catch(error => console.error("Error fetching cart count:", error));
 }
 
-
-let cartCount = 0;
-
-function addToCart(button) {
-    // Get the product image source
-    const card = button.closest('.card');
-    const imgSrc = card.querySelector('img').src;
-
-    // Create a flying image element
-    const flyingImage = document.createElement('img');
-    flyingImage.src = imgSrc;
-    flyingImage.style.position = 'fixed'; // Ensure fixed position for smooth transition
-    flyingImage.style.width = '300px'; // Starting size of the image
-    flyingImage.style.borderRadius = '100%';
-    flyingImage.style.transition = 'all 1s ease-in-out';
-    flyingImage.style.zIndex = 1000;
-
-    // Append the flying image to the body
-    document.body.appendChild(flyingImage);
-
-    // Get the position of the product image
-    const rect = card.querySelector('img').getBoundingClientRect();
-    flyingImage.style.top = `${rect.top + window.scrollY}px`;
-    flyingImage.style.left = `${rect.left + window.scrollX}px`;
-
-    // Get the cart icon position
-    const cartIcon = document.querySelector('.nav-link[aria-label="Cart"] i');
-    const cartRect = cartIcon.getBoundingClientRect();
-
-    // Animate the flying image to the cart icon
-    setTimeout(() => {
-        flyingImage.style.top = `${cartRect.top + window.scrollY}px`; // Adjust for scrolling
-        flyingImage.style.left = `${cartRect.left + window.scrollX}px`;
-        flyingImage.style.width = '100px'; // Shrink the image
-        flyingImage.style.opacity = '10';
-    }, 100);
-
-    // Remove the flying image and update cart count
-    flyingImage.addEventListener('transitionend', () => {
-        document.body.removeChild(flyingImage);
-
-        // Update the cart count
-        cartCount += 1;
-        document.getElementById('cart-count').textContent = cartCount;
-
-        // Now submit the form (after animation is complete)
-        button.closest('form').submit();
-    });
-}
+document.addEventListener("DOMContentLoaded", updateCartCount);
 </script>
 <style>
     #cart-count {

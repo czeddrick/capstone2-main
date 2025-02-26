@@ -1,3 +1,4 @@
+
 <!-- Bootstrap JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
@@ -18,7 +19,7 @@
 <?php
 // Include navbar and database connection
 include 'navbar.php';
-include 'db/connect.php';
+include '../db/connect.php';
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -28,12 +29,14 @@ if (!isset($_SESSION['user_id'])) {
 
 // Fetch orders for the logged-in user
 $user_id = $_SESSION['user_id'];
+$status = 'completed'; // Ensure the status is correctly set
+
 $sql = "SELECT product_name, image, payment_method, voucher_used, total_products, total_price, placed_on, status 
         FROM orders 
-        WHERE user_id = ? 
+        WHERE user_id = ? AND status = ? 
         ORDER BY placed_on DESC";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
+$stmt->bind_param("is", $user_id, $status); // Bind user_id as integer and status as string
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
@@ -75,7 +78,27 @@ $result = $stmt->get_result();
     }
     ?>
 </div>
-
+                        <div class="col-md-6">
+                            <h5 class="card-title"><?php echo htmlspecialchars($order['product_name']); ?></h5>
+                            
+                            <p class="text-muted mb-1"><strong>Payment Method:</strong> <?php echo htmlspecialchars($order['payment_method']); ?></p>
+                            <p class="text-muted mb-0"><strong>Voucher Used:</strong> <?php echo htmlspecialchars($order['voucher_used'] ? $order['voucher_used'] : 'None'); ?></p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h5 class="text-danger">₱<?php echo number_format($order['total_price'], 2); ?></h5>
+                            <p class="text-muted mb-0"><strong>Total Products:</strong> <?php echo htmlspecialchars($order['total_products']); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endwhile; ?>
+    <?php else: ?>
+        <div class="alert alert-warning text-center">
+            <h4>No Orders Found</h4>
+            <p>Looks like you haven't placed any orders yet. <a href="index.php" class="btn btn-dark btn-sm">Shop Now</a></p>
+        </div>
+    <?php endif; ?>
+</div>
 
 <!-- Review Modal -->
 <div id="review_modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="reviewModalLabel" aria-hidden="true">
@@ -190,29 +213,6 @@ $result = $stmt->get_result();
     });
 
     </script>
-
-
-                        <div class="col-md-6">
-                            <h5 class="card-title"><?php echo htmlspecialchars($order['product_name']); ?></h5>
-                            
-                            <p class="text-muted mb-1"><strong>Payment Method:</strong> <?php echo htmlspecialchars($order['payment_method']); ?></p>
-                            <p class="text-muted mb-0"><strong>Voucher Used:</strong> <?php echo htmlspecialchars($order['voucher_used'] ? $order['voucher_used'] : 'None'); ?></p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <h5 class="text-danger">₱<?php echo number_format($order['total_price'], 2); ?></h5>
-                            <p class="text-muted mb-0"><strong>Total Products:</strong> <?php echo htmlspecialchars($order['total_products']); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        <?php endwhile; ?>
-    <?php else: ?>
-        <div class="alert alert-warning text-center">
-            <h4>No Orders Found</h4>
-            <p>Looks like you haven't placed any orders yet. <a href="index.php" class="btn btn-dark btn-sm">Shop Now</a></p>
-        </div>
-    <?php endif; ?>
-</div>
 
 
 

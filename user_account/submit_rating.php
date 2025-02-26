@@ -38,23 +38,25 @@ if(isset($_POST['action'])) {
 
         // Retrieve and sanitize input data
         $product_id = $_POST['product_id'];
+        $order_id = $_POST['order_id']; // Retrieve the order ID
         $rating = (int)$_POST['rating_data'];
         $user_name = trim($_POST['user_name']);
         $user_review = trim($_POST['user_review']);
         $datetime = date("Y-m-d H:i:s");
 
         // Basic validation
-        if(empty($product_id) || empty($user_name) || empty($user_review) || $rating < 1 || $rating > 5) {
+        if(empty($product_id) || empty($order_id) || empty($user_name) || empty($user_review) || $rating < 1 || $rating > 5) {
             http_response_code(400);
             echo "Invalid input. Please ensure all fields are filled correctly.";
             exit();
         }
 
         // Prepare and execute the insert statement
-        $stmt = $pdo->prepare("INSERT INTO reviews (product_id, user_name, rating, review, datetime) VALUES (:product_id, :user_name, :rating, :review, :datetime)");
+        $stmt = $pdo->prepare("INSERT INTO reviews (product_id, order_id, user_name, rating, review, datetime) VALUES (:product_id, :order_id, :user_name, :rating, :review, :datetime)");
         try {
             $stmt->execute([
                 ':product_id' => $product_id,
+                ':order_id' => $order_id, // Include the order ID
                 ':user_name' => htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8'),
                 ':rating' => $rating,
                 ':review' => htmlspecialchars($user_review, ENT_QUOTES, 'UTF-8'),

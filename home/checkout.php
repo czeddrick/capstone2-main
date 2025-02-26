@@ -96,6 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
   foreach ($cart as $item) {
       $name = htmlspecialchars($user['first_name'] . " " . $user['surname']);
       $number = htmlspecialchars($user['phone']);
+      $color = htmlspecialchars($item['color']);
       $email = filter_var($user['email'], FILTER_SANITIZE_EMAIL);
       $address = htmlspecialchars($user['address']);
       $payment_method = "Cash on Delivery";
@@ -107,16 +108,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
       $insert_order = $conn->prepare("
           INSERT INTO orders 
-          (user_id, product_id, name, product_name, number, email, address, payment_method, voucher_used, total_products, total_price, placed_on, status, message, image) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (user_id, product_id, name, product_name, color, number, email, address, payment_method, voucher_used, total_products, total_price, placed_on, status, message, image) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ");
 
       $insert_order->bind_param(
-          "iissssssissssss",
+          "iisssssssissssss",
           $user_id,
           $item['product_id'],
           $name,
           $product_name,
+          $color,
           $number,
           $email,
           $address,
@@ -158,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
   if ($orderSuccess) {
       $conn->commit(); // Commit transaction
-      echo "Transaction committed successfully."; // Debugging
+      
   } else {
       $conn->rollback(); // Rollback if any order failed
       echo "Transaction rolled back due to errors."; // Debugging
@@ -172,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         <div class="alert alert-success text-center" style="margin-top:120px;">
             <h2 class="text-dark">Order Successfully Placed!</h2>
             <p class="text-center">Thank you for shopping with us. Your order is now being processed.</p>
-            <a href="index.php" class="btn btn-dark">Continue Shopping</a>
+            <a href="<?php echo BASE_URL; ?>index.php" class="btn btn-dark">Continue Shopping</a>
         </div>
     <?php else: ?>
         <div class="card mb-4">
@@ -193,6 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                     <tr>
                         <th>Product</th>
                         <th>Image</th>
+                        <th></th>
                         <th>Price</th>
                         <th>Quantity</th>
                         <th>Subtotal</th>
@@ -203,6 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                         <tr>
                             <td><?php echo htmlspecialchars($item['product_name']); ?></td>
                             <td><img src="<?php echo BASE_URL . htmlspecialchars($item['image']); ?>" style="width: 80px;"></td>
+                            <td>Color: <?php echo htmlspecialchars($item['color']); ?></td>
                             <td>₱<?php echo number_format($item['price'], 2); ?></td>
                             <td><?php echo htmlspecialchars($item['quantity']); ?></td>
                             <td>₱<?php echo number_format($item['price'] * $item['quantity'], 2); ?></td>
@@ -393,7 +397,11 @@ paypal.Buttons().render('#paypal-button-container');
     <?php endif; ?>
 </div>
 
-
+<style>
+  body{
+    padding-top: 80px;
+  }
+  </style>
 
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

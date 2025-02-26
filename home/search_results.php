@@ -7,7 +7,7 @@ if (isset($_GET['search_box'])) {
 
     try {
         // Prepare and execute the query
-        $stmt = $conn->prepare("SELECT * FROM `products` WHERE `product_name` LIKE ?");
+        $stmt = $conn->prepare("SELECT * FROM `products` WHERE `product_description` LIKE ?");
         $search_term = '%' . $search_box . '%';
         $stmt->bind_param('s', $search_term);
         $stmt->execute();
@@ -53,8 +53,13 @@ $conn->close(); // Close the connection
     body {
     font-family: Arial, sans-serif;
     background-color: #f8f9fa;
-    margin: 0;
+    margin-top: 80px;
     padding: 0;
+}
+
+.h2{
+
+  margin=top: 100px;
 }
 
 .container {
@@ -121,7 +126,7 @@ $conn->close(); // Close the connection
 
     </style>
     
-    <div class="container mt-5">
+    <div class="container mt-5" style= "margin-top: 100px">
         <h2 class="mb-4">Search Results for "<?php echo htmlspecialchars($search_box); ?>"</h2>
 
         <div class="row">
@@ -156,24 +161,7 @@ $conn->close(); // Close the connection
                 </p>
               </div>
 
-              <form action="cart.php" method="POST">
-                <?php if (isset($_SESSION['user_id'])): ?>
-                  <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
-                  <input type="hidden" name="product_name" value="<?php echo $product['product_name']; ?>">
-                  <input type="hidden" name="price" value="<?php echo $product['discounted_price']; ?>">
-                  <input type="hidden" name="quantity" value="1">
-                  <input type="hidden" name="image_url" value="<?php echo $product['image_url']; ?>">
-                  <input type="hidden" name="add_to_cart" value="1">
-                  <button class="btn btn-outline-warning btn-sm" type="submit" 
-                    <?php echo $product['stock'] <= 0 ? 'disabled' : ''; ?>>
-                    <i class="fas fa-shopping-cart"></i> Add to Cart
-                  </button>
-                <?php else: ?>
-                  <a href="main/user_login.php" class="btn btn-outline-warning btn-sm">
-                    <i class="fas fa-shopping-cart"></i> Add to Cart
-                  </a>
-                <?php endif; ?>
-              </form>
+              
             </div>
           </div>
         </div>

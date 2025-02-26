@@ -25,7 +25,24 @@ include "../db/connect.php";
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
+// Handle the AJAX request to update the color
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id']) && isset($_POST['color'])) {
+    $item_id = $_POST['item_id'];
+    $color = $_POST['color'];
 
+    // Update the color in the database
+    $stmt = $conn->prepare("UPDATE cart_items SET color = ? WHERE id = ?");
+    $stmt->bind_param("si", $color, $item_id);
+
+    if ($stmt->execute()) {
+        echo "Color updated successfully!";
+    } else {
+        echo "Error updating color: " . $stmt->error;
+    }
+
+    $stmt->close();
+    exit; // Stop further execution after handling the AJAX request
+}
 // Initialize cart if not already
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
@@ -43,6 +60,7 @@ if (isset($_SESSION['user_id'])) {
     $_SESSION['cart'] = $result->fetch_all(MYSQLI_ASSOC);
 }
 
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
     if (isset($_SESSION['user_id'])) {
         $user_id = $_SESSION['user_id'];
@@ -51,9 +69,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
         $quantity = (int)$_POST['quantity'];
         $price = $_POST['price'];
         $image = $_POST['image_url'];
+        $color = isset($_POST['color']) && !empty($_POST['color']) ? $_POST['color'] : 'None'; // Default to 'None' if no color is selected
 
-        $stmt = $conn->prepare("SELECT id, quantity FROM cart_items WHERE user_id = ? AND product_id = ?");
-        $stmt->bind_param("ii", $user_id, $product_id);
+        // Check if the product with the same color is already in the cart
+        $stmt = $conn->prepare("SELECT id, quantity FROM cart_items WHERE user_id = ? AND product_id = ? AND color = ?");
+        $stmt->bind_param("iis", $user_id, $product_id, $color);
         $stmt->execute();
         $result = $stmt->get_result();
         $existingItem = $result->fetch_assoc();
@@ -64,14 +84,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
             $stmt->bind_param("ii", $newQuantity, $existingItem['id']);
             $stmt->execute();
         } else {
-            $stmt = $conn->prepare("INSERT INTO cart_items (user_id, product_id, product_name, quantity, price, image) 
-                                    VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("iisids", $user_id, $product_id, $name, $quantity, $price, $image);
+            $stmt = $conn->prepare("INSERT INTO cart_items (user_id, product_id, product_name, quantity, price, image, color) 
+                                    VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("iisdiss", $user_id, $product_id, $name, $quantity, $price, $image, $color);
             $stmt->execute();
         }
 
         // Sync session cart
-        $stmt = $conn->prepare("SELECT id, product_id, product_name, price, quantity, image FROM cart_items WHERE user_id = ?");
+        $stmt = $conn->prepare("SELECT id, product_id, product_name, price, quantity, image, color FROM cart_items WHERE user_id = ?");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -79,9 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
 
         // Set session variable for modal display
         $_SESSION['addedtocartModal'] = true;
-header("Location: quick_view.php?id=" . $product_id);
-exit;
-
+        header("Location: quick_view.php?id=" . $product_id);
+        exit;
     } else {
         header("Location: main/user_login.php");
         exit;
@@ -126,23 +145,25 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['product_id']) && isset($_POST['quantity'])) {
-    $product_id = (int)$_POST['product_id'];
-    $quantity = (int)$_POST['quantity'];
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id']) && isset($_POST['quantity'])) {
+    $id = (int)$_POST['id']; // Get cart item ID
+    $quantity = (int)$_POST['quantity']; // Get new quantity
 
     // Update quantity in session
     foreach ($_SESSION['cart'] as &$cart_item) {
-        if ($cart_item['product_id'] == $product_id) {
+        if ($cart_item['id'] == $id) { // Use 'id' instead of 'product_id'
             $cart_item['quantity'] = $quantity;
         }
     }
 
     // Update quantity in the database
     if (isset($_SESSION['user_id'])) {
-        $stmt = $conn->prepare("UPDATE cart_items SET quantity = ? WHERE user_id = ? AND product_id = ?");
-        $stmt->bind_param("iii", $quantity, $_SESSION['user_id'], $product_id);
+        $stmt = $conn->prepare("UPDATE cart_items SET quantity = ? WHERE user_id = ? AND id = ?");
+        $stmt->bind_param("iii", $quantity, $_SESSION['user_id'], $id);
         
-        if (!$stmt->execute()) {
+        if ($stmt->execute()) {
+            echo "Cart item updated successfully.";
+        } else {
             echo "Error updating database: " . $stmt->error;
         }
     }
@@ -151,6 +172,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['product_id']) && isset
 }
 
 
+// Handle AJAX request before any HTML is output
+
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Handle the AJAX request to update the color
 
 // Fetch updated cart
 $cart = $_SESSION['cart'];
@@ -200,16 +228,50 @@ $cart = $_SESSION['cart'];
 
 /* Ensure images are vertically centered and don't stretch */
 .table tbody tr td img {
-    max-height: 80px; /* Adjust based on your needs */
+    max-height: 100px; /* Adjust based on your needs */
     width: auto;
     display: block;
     margin: auto;
 }
+.small-text {
+    font-size: 15px; /* Adjust size as needed */
+    font-weight: 2px; /* Optional: Adjust weight if needed */
+}
+.color-select {
+    font-size: 12px; /* Small font size */
+    padding: 5px;
+    width: 100px; /* Adjust based on layout */
+}
+@media (min-width: 992px) { /* For larger screens */
+    .fixed-cart {
+        position: fixed;
+        top: 100px;
+        right: 250px;
+        width: 350px;
+        background: #fff;
+        padding: 30px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.05);
+        z-index: 1000;
+    }
+}
+
+@media (max-width: 991px) { /* For tablets and smaller screens */
+    .fixed-cart {
+        position: relative;
+        width: 100%; /* Make it full width */
+        margin-top: 20px; /* Add some spacing */
+    }
+}
+
+
+
 </style>
+
+
 
 <div class="container cart-container">
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-lg-9 col-md-8">
             <h3>Your Cart</h3>
             <?php
             // Query the cart items
@@ -220,12 +282,10 @@ $cart = $_SESSION['cart'];
 
             // Check if the cart is empty
             if ($cart_result->num_rows == 0) {
-                // Display the empty cart message
-              // Display the empty cart message
-    echo "<div class='empty-cart-message'>";
-    echo "<p>Your cart is currently empty.</p>";
-    echo "<a href='../home/products.php' class='btn'>Shop Now</a>";
-    echo "</div>";
+                echo "<div class='empty-cart-message'>";
+                echo "<p>Your cart is currently empty.</p>";
+                echo "<a href='../home/products.php' class='btn'>Shop Now</a>";
+                echo "</div>";
             } else {
             ?>
                 <!-- Cart Form for Updating Quantities -->
@@ -236,6 +296,7 @@ $cart = $_SESSION['cart'];
                                 <th>Select</th>
                                 <th>Product</th>
                                 <th>Image</th>
+                                <th></th>
                                 <th>Price</th>
                                 <th>Quantity</th>
                                 <th>Subtotal</th>
@@ -243,22 +304,54 @@ $cart = $_SESSION['cart'];
                             </tr>
                         </thead>
                         <tbody>
-                            <?php while ($item = $cart_result->fetch_assoc()): ?>
+                        <?php while ($item = $cart_result->fetch_assoc()): ?>
                                 <tr>
                                     <td>
                                         <input type="checkbox" name="selected_items[]" value="<?php echo $item['id']; ?>" class="product-checkbox">
                                     </td>
                                     <td><?php echo htmlspecialchars($item['product_name']); ?></td>
                                     <td><img src="<?php echo BASE_URL . htmlspecialchars($item['image']); ?>" style="width: 80px;"></td>
+                                    <td>
+                                        <?php
+                                        // Fetch available colors from the products table
+                                        $product_id = $item['product_id'];
+                                        $color_query = $conn->prepare("SELECT color FROM products WHERE id = ?");
+                                        $color_query->bind_param("i", $product_id);
+                                        $color_query->execute();
+                                        $color_result = $color_query->get_result();
+
+                                        if ($color_row = $color_result->fetch_assoc()) {
+                                            $available_colors = trim($color_row['color']); // Trim to remove extra spaces
+
+                                            // Check if the color column is not empty
+                                            if (!empty($available_colors)) {
+                                                echo '<strong class="small-text">Color:</strong>';
+                                                echo '<select name="color[' . $item['id'] . ']" class="form-control small-text color-select" data-id="' . $item['id'] . '" onchange="updateColor(this)">';
+
+                                                // Split the colors and display them as options
+                                                $available_colors = explode(',', $available_colors);
+                                                foreach ($available_colors as $color) {
+                                                    $color = trim($color);
+                                                    $selected = ($color == $item['color']) ? 'selected' : ''; // Pre-select the cart color
+                                                    echo '<option value="' . $color . '" ' . $selected . '>' . ucfirst($color) . '</option>';
+                                                }
+
+                                                echo '</select>';
+                                            }
+                                        }
+                                        ?>
+                                    </td>
+
                                     <td>₱<?php echo number_format($item['price'], 2); ?></td>
                                     <td>
-                                        <input type="number" 
-                                               name="quantities[<?php echo $item['product_id']; ?>]" 
-                                               value="<?php echo $item['quantity'] ?? 1; ?>" 
-                                               min="1" 
-                                               class="form-control quantity-input" 
-                                               style="width: 80px;"
-                                               data-product-id="<?php echo $item['product_id']; ?>">
+                                    <input type="number" 
+                                            name="quantities[<?php echo $item['id']; ?>]" 
+                                            value="<?php echo $item['quantity'] ?? 1; ?>" 
+                                            min="1" 
+                                            class="form-control quantity-input" 
+                                            style="width: 80px;"
+                                            data-id="<?php echo $item['id']; ?>"> <!-- Change to data-id -->
+
                                     </td>
                                     <td>₱<?php echo number_format(($item['price'] ?? 0) * ($item['quantity'] ?? 1), 2); ?></td>
                                     <td>
@@ -268,44 +361,44 @@ $cart = $_SESSION['cart'];
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
+
                         </tbody>
                     </table>
                 </form>
             <?php } ?>
         </div>
-                     
-
-
         
-        
-        <div class="col-md-4">
-            <h4>Cart Totals</h4>
-            <ul class="list-group mb-3">
-                <li class="list-group-item d-flex justify-content-between">
-                    <span>Total</span>
-                    <strong>
-                        ₱<?php echo number_format(array_sum(array_map(function($item) {
-                            return ($item['price'] ?? 0) * ($item['quantity'] ?? 1);
-                        }, $cart)), 2); ?>
-                    </strong>
-                   
-                </li>
-            </ul> 
-            <ul class="list-group mb-3">
-            <li class="list-group-item d-flex justify-content-between">
-            <span>Selected item total</span>
-                    <strong id="selected-total">₱0.00</strong>
-                </li>
-            </ul> 
-            <form id="checkout-form" action="checkout.php" method="POST">
-            <input type="hidden" name="selected_items" id="selected-items">
-            <button type="submit" class="btn btn-warning" id="checkoutBtn" disabled>Proceed to Checkout</button>
-            </form>
-
-
+        <div class="col-lg-3 col-md-4">
+            <div class="cart-totals fixed-cart">
+                <h4>Cart Totals</h4>
+                <ul class="list-group mb-3">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Total</span>
+                        <strong>
+                            ₱<?php echo number_format(array_sum(array_map(function($item) {
+                                return ($item['price'] ?? 0) * ($item['quantity'] ?? 1);
+                            }, $cart)), 2); ?>
+                        </strong>
+                    </li>
+                </ul> 
+                <ul class="list-group mb-3">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Selected item total</span>
+                        <strong id="selected-total">₱0.00</strong>
+                    </li>
+                </ul> 
+                <form id="checkout-form" action="checkout.php" method="POST">
+                    <input type="hidden" name="selected_items" id="selected-items">
+                    <button type="submit" class="btn btn-warning w-100" id="checkoutBtn" disabled>Proceed to Checkout</button>
+                </form>
+            </div>
         </div>
+
+
+
     </div>
 </div>
+
 <!-- Delete Confirmation Modal (Centered) -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"> <!-- Centering the modal -->
@@ -351,7 +444,27 @@ $cart = $_SESSION['cart'];
 
 
 <script>
+// color adjust
+function updateColor(selectElement) {
+    // Get the selected color and item ID
+    var selectedColor = selectElement.value;
+    var itemId = selectElement.getAttribute('data-id');
 
+    // Send an AJAX request to the same file
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "", true); // Empty URL means the current file
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            // Handle the response if needed
+            console.log(xhr.responseText);
+        }
+    };
+
+    // Send the data
+    xhr.send("item_id=" + itemId + "&color=" + selectedColor);
+}
 document.addEventListener("DOMContentLoaded", function() {
     const productCheckboxes = document.querySelectorAll(".product-checkbox");
     const selectedTotalElement = document.getElementById("selected-total");
@@ -365,7 +478,7 @@ document.addEventListener("DOMContentLoaded", function() {
         productCheckboxes.forEach(checkbox => {
             if (checkbox.checked) {
                 const row = checkbox.closest("tr");
-                const price = parseFloat(row.querySelector("td:nth-child(4)").textContent.replace("₱", "").replace(",", ""));
+                const price = parseFloat(row.querySelector("td:nth-child(5)").textContent.replace("₱", "").replace(",", ""));
                 const quantity = parseInt(row.querySelector(".quantity-input").value);
                 selectedTotal += price * quantity;
                 selectedItems.push(checkbox.value);
@@ -387,7 +500,6 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 
-
 function confirmDelete(itemId, productName) {
     // Set the product name in the modal
     document.getElementById("productName").innerText = productName;
@@ -402,16 +514,18 @@ function confirmDelete(itemId, productName) {
 
 $(document).ready(function() {
     $('.quantity-input').on('change', function() {
-        let productID = $(this).data('product-id');
+        let cartItemID = $(this).data('id'); // Get cart item ID
         let quantity = $(this).val();
 
+        console.log("Updating Cart Item:", { id: cartItemID, quantity: quantity });
+
         $.ajax({
-            url: "cart.php",  // Same PHP file handling the request
+            url: "cart.php",  
             method: "POST",
-            data: { product_id: productID, quantity: quantity },
+            data: { id: cartItemID, quantity: quantity }, // Send cart item ID
             success: function(response) {
-                console.log("Cart updated successfully");
-                location.reload();  // Refresh the cart totals
+                console.log("Response from server:", response);
+                location.reload();  
             },
             error: function() {
                 console.log("Error updating cart");
@@ -484,5 +598,4 @@ $(document).ready(function() {
 
 
 </script>
-</body>
 </html>
