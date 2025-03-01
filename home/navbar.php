@@ -25,7 +25,8 @@ if ($user_id) {
 }
 $sql = "SELECT id, product_name, image, status FROM `orders` 
         WHERE (status = 'pending' OR status = 'completed' OR status = 'received') 
-        AND user_id = ?";
+        AND user_id = ? 
+        ORDER BY id DESC";  // Change `id` to `created_at` if available
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id); // Bind the user ID securely
@@ -104,7 +105,7 @@ $result = $stmt->get_result();
                                 </li>
                             <?php endwhile; ?>
                         <?php else: ?>
-                     <!-- Default Notification Message -->
+             <!-- Default Notification Message -->
                         <li class="text-center text-secondary p-3">
                             <p class="fw-bold">Welcome to Your Notifications! 🎉</p>
                             <p class="small">
@@ -117,11 +118,12 @@ $result = $stmt->get_result();
                     <?php endif; ?>
 
                         </ul>
-                        <?php if ($cart_count > 10): ?>
-            <li class="text-center">
-                <a href="<?php echo BASE_URL; ?>home/account.php" class="text-primary fw-bold text-decoration-none">View All</a>
-            </li>
-        <?php endif; ?>
+                        <?php if ($result->num_rows > 10): ?>
+                            <li class="text-center">
+                                <a href="<?php echo BASE_URL; ?>home/account.php" class="text-primary fw-bold text-decoration-none">View All</a>
+                            </li>
+                        <?php endif; ?>
+
                     </ul>
                 </li>
             <?php if (isset($_SESSION['user_id'])): ?>               

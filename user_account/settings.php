@@ -88,28 +88,8 @@
           <label class="form-check-label" for="other">Other</label>
         </div>
       </div>
-      <div class="mb-3">
-        <label for="dob" class="form-label">Date of Birth</label>
-        <div class="d-flex">
-          <select class="form-select me-2" style="max-width: 100px;">
-            <option>Date</option>
-            <!-- Add options for dates -->
-          </select>
-          <select class="form-select me-2" style="max-width: 120px;">
-            <option>Month</option>
-            <!-- Add options for months -->
-          </select>
-          <select class="form-select" style="max-width: 140px;">
-            <option>Year</option>
-            <!-- Add options for years -->
-          </select>
-        </div>
-      </div>
-      <div class="mb-3 profile-image">
-        <img src="https://via.placeholder.com/100" alt="Profile Image">
-        <button type="button" class="btn btn-outline-secondary btn-sm mt-2">Select Image</button>
-        <small class="text-muted">File size: maximum 1 MB<br>File extension: .JPEG, .PNG</small>
-      </div>
+
+      
       <button type="submit" class="btn btn-primary">Save</button>
     </form>
   </div>

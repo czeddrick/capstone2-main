@@ -309,76 +309,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search_box'])) {
 <div class="container mt-4">
     <div class="row">
         <!-- Sidebar -->
-        <!-- Sidebar -->
-<div class="col-md-3 fixed-sidebar">
-    <div class="list-group">
-        <a href="../my_account.php" class="list-group-item list-group-item-action bg-dark text-white">
-            <i class="fas fa-user"></i> My Account
-        </a>
-        <a href="#" class="list-group-item list-group-item-action" id="statusBtn">
-            <i class="fas fa-box-open"></i> Status
-        </a>
-        <a href="<?php echo BASE_URL; ?>home/user_purchased.php" class="list-group-item list-group-item-action">
-            <i class="fas fa-shopping-bag"></i> Orders
-        </a>
-        <a href="<?php echo BASE_URL; ?>home/cancelled_order.php" class="list-group-item list-group-item-action">
-            <i class="fas fa-cog"></i> Cancel
-        </a>
-        <a href="#" class="list-group-item list-group-item-action" id="notificationBtn">
-            <i class="fas fa-bell"></i> Notifications
-        </a>
-        <a href="#" class="list-group-item list-group-item-action">
-            <i class="fas fa-tag"></i> My Vouchers
-        </a>
-        <a href="<?php echo BASE_URL; ?>../user_account/settings.php" class="list-group-item list-group-item-action">
-            <i class="fas fa-cog"></i> Settings
-        </a>
-        <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#logoutModal">
-            <i class="fas fa-sign-out-alt"></i> Logout
-        </a>
-    </div>
-</div>
+        <div class="col-md-3">
+            <div class="list-group">
+                <a href="../my_account.php" class="list-group-item list-group-item-action bg-dark text-white">
+                    <i class="fas fa-user"></i> My Account
+                </a>
+                <a href="#" class="list-group-item list-group-item-action" id="statusBtn">
+                    <i class="fas fa-box-open"></i> Status
+                </a>
+                <a href="<?php echo BASE_URL; ?>home/user_purchased.php" class="list-group-item list-group-item-action">
+                    <i class="fas fa-shopping-bag"></i> Orders
+                </a>
+                <a href="#" class="list-group-item list-group-item-action" id="cancelBtn">
+                    <i class="fas fa-ban"></i> Cancel
+                </a>
+                <a href="#" class="list-group-item list-group-item-action" id="notificationBtn">
+                    <i class="fas fa-bell"></i> Notifications
+                </a>
+                <a href="#" class="list-group-item list-group-item-action">
+                    <i class="fas fa-tag"></i> My Vouchers
+                </a>
+                <a href="#" class="list-group-item list-group-item-action" id="settingsBtn">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+                <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
 
-            <!-- Middle Section: Notifications & Order Status -->
-                <div class="col-md-9">
-                    <!-- Notification Panel (Initially Hidden) -->
-                    <div id="notificationPanel" class="bg-white shadow-sm p-3 rounded d-none">
-                        <h6 class="fw-bold text-secondary">Recently Received Notifications</h6>
-                        <ul class="list-unstyled">
-                            <?php while ($row = $result->fetch_assoc()): ?>
-                                <li>
-                                    <div class="d-flex align-items-start mb-3">
-                                    <img src="<?php echo BASE_URL . htmlspecialchars($row['image']); ?>" 
-                                            alt="Order Image" 
-                                            class="me-3 rounded-circle border border-dark" 
-                                            style="width: 40px; height: 40px; margin-left: 20px; border-width: 1px;">
-                                        <div>
-                                            <p class="mb-0 fw-bold" style="padding-left: 15px;">
-                                                <?php echo htmlspecialchars($row['product_name']); ?>
-                                            </p>
-                                            <small class="text-muted" style="padding-left: 15px;">
-                                                <?php 
-                                                    if ($row['status'] === 'Pending') {
-                                                        echo "Order ID (" . htmlspecialchars($row['id']) . "), Order Placed. Thank you for purchasing!";
-                                                    } elseif ($row['status'] === 'Completed' || $row['status'] === 'Received') {
-                                                        echo "Order ID (" . htmlspecialchars($row['id']) . ") Your Order has been delivered.";
-                                                    }
-                                                ?>
-                                            </small>
-                                        </div>
-                                    </div>
-                                    <hr class="my-2"> <!-- Separator between notifications -->
-                                </li>
-                            <?php endwhile; ?>
-                        </ul>
-                    </div>
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <!-- Notification Panel -->
+            <div id="notificationPanel" class="bg-white shadow-sm p-3 rounded d-none">
+                <h6 class="fw-bold text-secondary">Recently Received Notifications</h6>
+                <ul class="list-unstyled">
+                    <?php while ($row = $result->fetch_assoc()): ?>
+                        <li>
+                            <div class="d-flex align-items-start mb-3">
+                                <img src="<?php echo BASE_URL . htmlspecialchars($row['image']); ?>" 
+                                    alt="Order Image" 
+                                    class="me-3 rounded-circle border border-dark" 
+                                    style="width: 40px; height: 40px;">
+                                <div>
+                                    <p class="mb-0 fw-bold">
+                                        <?php echo htmlspecialchars($row['product_name']); ?>
+                                    </p>
+                                    <small class="text-muted">
+                                        <?php 
+                                            if ($row['status'] === 'Pending') {
+                                                echo "Order ID (" . htmlspecialchars($row['id']) . "), Order Placed. Thank you!";
+                                            } elseif ($row['status'] === 'Completed' || $row['status'] === 'Received') {
+                                                echo "Order ID (" . htmlspecialchars($row['id']) . ") Your Order has been delivered.";
+                                            }
+                                        ?>
+                                    </small>
+                                </div>
+                            </div>
+                            <hr class="my-2">
+                        </li>
+                    <?php endwhile; ?>
+                </ul>
+            </div>
 
-
-
-
-
-            <!-- Order Status Navigation (Visible by Default) -->
-            <div id="orderStatusSection" class="d-flex flex-column bg-white  p-3 rounded">
+            <!-- Order Status Section -->
+            <div id="orderStatusSection" class="d-flex flex-column bg-white p-3 rounded">
                 <div class="d-flex justify-content-between">
                     <div class="status-tab text-center flex-fill mx-2 py-2 rounded bg-warning text-dark" data-status="pending">
                         <i class="fas fa-box-open fa-2x"></i>
@@ -397,10 +392,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search_box'])) {
                         <p class="mb-0">Completed</p>
                     </div>
                 </div>
-
-                <!-- Products Display Area -->
                 <div id="order-content" class="mt-4">
                     <p class="text-center">Select a status to view orders.</p>
+                </div>
+            </div>
+
+            <!-- Settings Panel -->
+            <div id="settingsPanel" class="card d-none mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h5>Change Password</h5>
+                </div>
+                <div class="card-body">
+                    <form action="change_password.php" method="POST">
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email_verification" class="form-label">Email Verification Code</label>
+                            <input type="text" class="form-control" id="email_verification" name="email_verification" required>
+                            <button type="button" class="btn btn-secondary mt-2" id="sendCode">Send Verification Code</button>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Password</button>
+                    </form>
+                </div>
+            </div>
+            <div id="cancelPanel" class="card d-none mt-4">
+                <div class="card-header bg-danger text-white">
+                    <h5>Canceled Orders</h5>
+                </div>
+                <div class="card-body">
+                <ul class="list-group">
+    <?php
+    // Fetch canceled orders from the database
+    $query = "SELECT * FROM orders WHERE status = 'Cancelled'";
+    $result = $conn->query($query);
+    if ($result->num_rows > 0):
+        while ($row = $result->fetch_assoc()): ?>
+            <li class="list-group-item d-flex align-items-center">
+                <!-- Product Image -->
+                <img src="<?php echo BASE_URL . htmlspecialchars($row['image']); ?>" 
+                     alt="Product Image" 
+                     class="me-3 rounded border border-dark" 
+                     style="width: 60px; height: 60px; object-fit: cover;">
+
+                <div class="flex-grow-1">
+                    <strong><?php echo htmlspecialchars($row['product_name']); ?></strong>
+                    <p class="mb-0 text-muted">Order ID: <?php echo htmlspecialchars($row['id']); ?></p>
+                    <small class="text-muted">Placed on: <?php echo htmlspecialchars($row['placed_on']); ?></small>
+                </div>
+
+                <span class="badge bg-danger">Canceled</span>
+            </li>
+        <?php endwhile;
+    else: ?>
+        <li class="list-group-item text-center">No canceled orders found.</li>
+    <?php endif; ?>
+</ul>
+
                 </div>
             </div>
         </div>
@@ -623,29 +680,46 @@ const acceptPolicyCheckbox = document.getElementById('acceptPolicy');
 <script>
 
 
-document.getElementById("statusBtn").addEventListener("click", function(event) {
-    event.preventDefault();
-    
-    var orderStatusSection = document.getElementById("orderStatusSection");
-    var notificationPanel = document.getElementById("notificationPanel");
+document.addEventListener("DOMContentLoaded", function() {
+    // Get elements
+    const cancelBtn = document.getElementById("cancelBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
+    const statusBtn = document.getElementById("statusBtn");
+    const notificationBtn = document.getElementById("notificationBtn");
 
-    // Hide notification panel
-    notificationPanel.classList.add("d-none");
+    const cancelPanel = document.getElementById("cancelPanel");
+    const settingsPanel = document.getElementById("settingsPanel");
+    const orderStatusSection = document.getElementById("orderStatusSection");
+    const notificationPanel = document.getElementById("notificationPanel");
 
-    // Show order status section
-    orderStatusSection.classList.remove("d-none");
-});
-document.getElementById("notificationBtn").addEventListener("click", function(event) {
-    event.preventDefault();
-    
-    var orderStatusSection = document.getElementById("orderStatusSection");
-    var notificationPanel = document.getElementById("notificationPanel");
+    function hideAllPanels() {
+        cancelPanel.classList.add("d-none");
+        settingsPanel.classList.add("d-none");
+        orderStatusSection.classList.add("d-none");
+        notificationPanel.classList.add("d-none");
+    }
 
-    // Hide notification panel
-    orderStatusSection.classList.add("d-none");
+    // Event listener for Cancel link
+    cancelBtn.addEventListener("click", function() {
+        hideAllPanels();
+        cancelPanel.classList.remove("d-none");
+    });
 
-    // Show order status section
-    notificationPanel.classList.remove("d-none");
+    // Keep other buttons working
+    settingsBtn.addEventListener("click", function() {
+        hideAllPanels();
+        settingsPanel.classList.remove("d-none");
+    });
+
+    statusBtn.addEventListener("click", function() {
+        hideAllPanels();
+        orderStatusSection.classList.remove("d-none");
+    });
+
+    notificationBtn.addEventListener("click", function() {
+        hideAllPanels();
+        notificationPanel.classList.remove("d-none");
+    });
 });
 
 
