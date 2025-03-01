@@ -4,7 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
     
 }
-include 'confignav.php';
+
 include 'navbar.php'; 
 ?>
 

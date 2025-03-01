@@ -84,88 +84,95 @@ $totalPayment = $merchandiseSubtotal + $shippingSubtotal - $voucherDiscount;
 $orderSuccess = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
-  $voucher_used = "10% Off"; // Example voucher
-  $discount = $merchandiseSubtotal * 0.10; // Calculate 10% discount
-  $placed_on = date("Y-m-d H:i:s");
-  $status = "Pending";
+    $voucher_used = "10% Off"; // Example voucher
+    $discount = $merchandiseSubtotal * 0.10; // Calculate 10% discount
+    $placed_on = date("Y-m-d H:i:s");
+    $status = "Pending";
 
-  $conn->begin_transaction(); // Start transaction
+    $conn->begin_transaction(); // Start transaction
 
-  $orderSuccess = true; // Assume success
+    $orderSuccess = true; // Assume success
 
-  foreach ($cart as $item) {
-      $name = htmlspecialchars($user['first_name'] . " " . $user['surname']);
-      $number = htmlspecialchars($user['phone']);
-      $color = htmlspecialchars($item['color']);
-      $email = filter_var($user['email'], FILTER_SANITIZE_EMAIL);
-      $address = htmlspecialchars($user['address']);
-      $payment_method = "Cash on Delivery";
-      $message = ""; // You can add a message field if needed
-      $product_name = htmlspecialchars($item['product_name']);
-      $quantity = (int)$item['quantity'];
-      $total_price = (float)($item['price'] * $item['quantity']);
-      $image = htmlspecialchars($item['image']);
+    foreach ($cart as $item) {
+        $name = htmlspecialchars($user['first_name'] . " " . $user['surname']);
+        $number = htmlspecialchars($user['phone']);
+        $color = htmlspecialchars($item['color']);
+        $email = filter_var($user['email'], FILTER_SANITIZE_EMAIL);
+        $address = htmlspecialchars($user['address']);
+        $payment_method = "Cash on Delivery";
+        $message = ""; // Optional message
+        $product_name = htmlspecialchars($item['product_name']);
+        $quantity = (int)$item['quantity'];
+        $total_price = (float)($item['price'] * $item['quantity']);
+        $image = htmlspecialchars($item['image']);
 
-      $insert_order = $conn->prepare("
-          INSERT INTO orders 
-          (user_id, product_id, name, product_name, color, number, email, address, payment_method, voucher_used, total_products, total_price, placed_on, status, message, image) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ");
+        $insert_order = $conn->prepare("
+            INSERT INTO orders 
+            (user_id, product_id, name, product_name, color, number, email, address, payment_method, voucher_used, total_products, total_price, placed_on, status, message, image) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
 
-      $insert_order->bind_param(
-          "iisssssssissssss",
-          $user_id,
-          $item['product_id'],
-          $name,
-          $product_name,
-          $color,
-          $number,
-          $email,
-          $address,
-          $payment_method,
-          $voucher_used,
-          $quantity,
-          $total_price,
-          $placed_on,
-          $status,
-          $message,
-          $image
-      );
+        $insert_order->bind_param(
+            "iisssssssissssss",
+            $user_id,
+            $item['product_id'],
+            $name,
+            $product_name,
+            $color,
+            $number,
+            $email,
+            $address,
+            $payment_method,
+            $voucher_used,
+            $quantity,
+            $total_price,
+            $placed_on,
+            $status,
+            $message,
+            $image
+        );
 
-      if (!$insert_order->execute()) {
-          $orderSuccess = false;
-          echo "Error inserting order: " . $insert_order->error; // Debugging
-          break;
-      }
+        if (!$insert_order->execute()) {
+            $orderSuccess = false;
+            echo "Error inserting order: " . $insert_order->error; // Debugging
+            break;
+        }
 
-      $insert_order->close();
-  }
+        $insert_order->close();
+    }
 
-  if ($orderSuccess) {
-      // Only delete successfully ordered items
-      $placeholders = implode(',', array_fill(0, count($selected_items), '?'));
-      $delete_cart = $conn->prepare("DELETE FROM cart_items WHERE id IN ($placeholders) AND user_id = ?");
+    if ($orderSuccess) {
+        // Only delete successfully ordered items
+        $placeholders = implode(',', array_fill(0, count($selected_items), '?'));
+        $delete_cart = $conn->prepare("DELETE FROM cart_items WHERE id IN ($placeholders) AND user_id = ?");
 
-      $types = str_repeat('i', count($selected_items)) . 'i';
-      $params = array_merge($selected_items, [$user_id]);
-      $delete_cart->bind_param($types, ...$params);
+        $types = str_repeat('i', count($selected_items)) . 'i';
+        $params = array_merge($selected_items, [$user_id]);
+        $delete_cart->bind_param($types, ...$params);
 
-      if (!$delete_cart->execute()) {
-          echo "Error deleting cart items: " . $delete_cart->error; // Debugging
-          $orderSuccess = false;
-      }
+        if (!$delete_cart->execute()) {
+            echo "Error deleting cart items: " . $delete_cart->error; // Debugging
+            $orderSuccess = false;
+        }
 
-      $delete_cart->close();
-  }
+        $delete_cart->close();
+    }
 
-  if ($orderSuccess) {
-      $conn->commit(); // Commit transaction
-      
-  } else {
-      $conn->rollback(); // Rollback if any order failed
-      echo "Transaction rolled back due to errors."; // Debugging
-  }
+    if ($orderSuccess) {
+        $conn->commit(); // Commit transaction
+
+        // ✅ Call the get_order.php API to sync orders
+        $apiUrl = "http://localhost/capstone2-main/api/get_order.php"; // Change to actual API URL
+
+        // ✅ Method 1: Simple method using file_get_contents
+        $apiResponse = file_get_contents($apiUrl);
+
+    } else {
+        $conn->rollback(); // Rollback if any order failed
+        echo "Transaction rolled back due to errors."; // Debugging
+    }
 }
+
 ?>
 
 

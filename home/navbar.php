@@ -23,7 +23,14 @@ if ($user_id) {
         $cart_count = $row['total_items'] ?? 0;
     }
 }
+$sql = "SELECT id, product_name, image, status FROM `orders` 
+        WHERE (status = 'pending' OR status = 'completed' OR status = 'received') 
+        AND user_id = ?";
 
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id); // Bind the user ID securely
+$stmt->execute();
+$result = $stmt->get_result();
 
 ?>
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3 fixed-top">
@@ -67,53 +74,56 @@ if ($user_id) {
                             }
                  </style>
                 <li class="nav-item dropdown me-3">
-    <a class="nav-link text-dark" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
-        <i class="fas fa-bell fs-5"></i>
-        <span class="badge bg-warning rounded-circle text-dark position-absolute top-0 start-100 translate-middle">4</span>
-    </a>
-    <ul class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="notificationsDropdown" style="width: 350px; max-height: 400px; overflow-y: auto;">
-        <li class="dropdown-header fw-bold text-secondary">Recently Received Notifications</li>
-        <li>
-            <div class="d-flex align-items-start mb-3">
-                <img src="path-to-image-1.png" alt="Icon" class="me-2 rounded-circle" style="width: 40px; height: 40px;">
-                <div>
-                    <p class="mb-0 fw-bold">LF: EXCLUSIVE DEALS! 🤑</p>
-                    <small class="text-muted">Meron kami sa Shopee LIVE! Watch and check out to get EXCLUSIVE deals and discounts! 👉</small>
-                </div>
-            </div>
-        </li>
-        <li>
-            <div class="d-flex align-items-start mb-3">
-                <img src="path-to-image-2.png" alt="Icon" class="me-2 rounded-circle" style="width: 40px; height: 40px;">
-                <div>
-                    <p class="mb-0 fw-bold">12NN ONLY: 49% OFF on iPhone!</p>
-                    <small class="text-muted">Hurry! Save 49% OFF on iPhone 14 Plus, 26% OFF on Bosch power tools, & MORE at 12NN only...</small>
-                </div>
-            </div>
-        </li>
-        <li>
-            <div class="d-flex align-items-start mb-3">
-                <img src="path-to-image-3.png" alt="Icon" class="me-2 rounded-circle" style="width: 40px; height: 40px;">
-                <div>
-                    <p class="mb-0 fw-bold">You just ordered from a shop overseas!</p>
-                    <small class="text-muted">Wow, you just ordered from a shop overseas! Check your shipping status...</small>
-                </div>
-            </div>
-        </li>
-        <li>
-            <div class="d-flex align-items-start mb-3">
-                <img src="path-to-image-4.png" alt="Icon" class="me-2 rounded-circle" style="width: 40px; height: 40px;">
-                <div>
-                    <p class="mb-0 fw-bold">Reminder: Received Order?</p>
-                    <small class="text-muted">If your order 24123078JP352X has not arrived or is incomplete/damaged, file for return/refund...</small>
-                </div>
-            </div>
-        </li>
-        <li class="text-center">
-            <a href="#" class="text-primary fw-bold text-decoration-none">View All</a>
-        </li>
-    </ul>
-</li>
+                    <a class="nav-link text-dark" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
+                        <i class="fas fa-bell fs-5"></i>
+                        <span class="badge bg-warning rounded-circle text-dark position-absolute top-0 start-100 translate-middle">4</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="notificationsDropdown" style="width: 470px; max-height: 400px; overflow-y: auto;">
+                        <li class="dropdown-header fw-bold text-secondary">Recently Received Notifications</li>
+                        <ul>
+                        <?php if ($result->num_rows > 0): ?>
+                            <?php while ($row = $result->fetch_assoc()): ?>
+                                <li>
+                                    <div class="d-flex align-items-start mb-3">
+                                        <img src="<?php echo BASE_URL . htmlspecialchars($row['image']); ?>" alt="Order Image" class="me-2 rounded-circle" style="width: 40px; height: 40px; margin-right: 50px;">
+                                        <div>
+                                            <p class="mb-0 fw-bold" style="margin-left: 20px;">
+                                                <?php echo htmlspecialchars($row['product_name']); ?>
+                                            </p>
+                                            <small class="text-muted" style="margin-left: 20px;">
+                                                <?php 
+                                                    if ($row['status'] === 'Pending') {
+                                                        echo "Order ID (" . htmlspecialchars($row['id']) . "), Order Placed, Thank you for purchasing!";
+                                                    } elseif ($row['status'] === 'Completed' || $row['status'] === 'Received') {
+                                                        echo "Order ID (" . htmlspecialchars($row['id']) . ") Your Order has been delivered.";
+                                                    }
+                                                ?>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </li>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                     <!-- Default Notification Message -->
+                        <li class="text-center text-secondary p-3">
+                            <p class="fw-bold">Welcome to Your Notifications! 🎉</p>
+                            <p class="small">
+                                Stay updated with the latest updates on your orders, exclusive deals, and important alerts. 📦✨
+                            </p>
+                            <p class="small text-muted">
+                                💡 Tip: Check back here regularly to never miss an update on your purchases!
+                            </p>
+                        </li>
+                    <?php endif; ?>
+
+                        </ul>
+                        <?php if ($cart_count > 10): ?>
+            <li class="text-center">
+                <a href="<?php echo BASE_URL; ?>home/account.php" class="text-primary fw-bold text-decoration-none">View All</a>
+            </li>
+        <?php endif; ?>
+                    </ul>
+                </li>
             <?php if (isset($_SESSION['user_id'])): ?>               
                 <li class="nav-item me-3">
                     <a class="nav-link text-dark" href="<?php echo BASE_URL; ?>home/user_purchased.php" aria-label="Orders">
@@ -138,21 +148,8 @@ if ($user_id) {
 </li>
 
 <script>
-function updateCartCount() {
-    fetch(window.location.href, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "fetch_cart_count=1"
-    })
-    .then(response => response.json())
-    .then(data => {
-        let cartBadge = document.getElementById("cart-count");
-        cartBadge.textContent = data.cart_count; // Always display a number, even if it's 0
-    })
-    .catch(error => console.error("Error fetching cart count:", error));
-}
 
-document.addEventListener("DOMContentLoaded", updateCartCount);
+ 
 </script>
 <style>
     #cart-count {

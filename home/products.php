@@ -1,9 +1,9 @@
 
 <?php
  include "../db/connect.php";
-
+ session_start();
 ?>
-
+ <?php include 'navbar.php'; ?>
 <?php
 // Fetch all products initially
 $sql = "SELECT * FROM products"; 
@@ -39,13 +39,15 @@ if ($result->num_rows > 0) {
 
 
   <body>
- <?php include 'navbar.php'; ?>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/jpg" href="../images/logo.jpg">
   <title>Products</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
   <h3 class="mt-5 text-center" style="font-family: fantasy;">Shop Popular Categories</h3>
 <div class="d-flex justify-content-center flex-wrap mt-5">
   <!-- Category 1 -->

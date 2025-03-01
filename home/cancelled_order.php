@@ -1,7 +1,7 @@
 <?php
 include '../db/connect.php';
 session_start();
-include "../home/navbar.php"; 
+include 'navbar.php'; 
 // Ensure admin is logged in
 
 
@@ -21,8 +21,15 @@ $result = $conn->query($sql);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Canceled Orders</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://kit.fontawesome.com/your-fontawesome-key.js" crossorigin="anonymous"></script>
 </head>
 <body>
+    <style>
+        body{
+            padding-top: 90px;
+        }
+        </style>
 <div class="container my-4">
     <h1 class="mb-4">Canceled Orders</h1>
 

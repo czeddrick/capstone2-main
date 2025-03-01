@@ -98,7 +98,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
     
 }
-
+$sql = "SELECT id, product_name, image, status FROM `orders` WHERE status = 'pending' OR status = 'completed' OR status = 'received'";
+$result = $conn->query($sql);
 ?>
 
 
@@ -179,11 +180,14 @@ function addToCart(button) {
 <!-- FontAwesome and Bootstrap -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://kit.fontawesome.com/your-fontawesome-key.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 
   <style>
     body {
       font-family: 'Arial', sans-serif;
       padding-top: 90px;
+      
     }
 
     /* Main Banner Section */
@@ -255,6 +259,18 @@ function addToCart(button) {
 .search-box-container .btn {
     border-width: 2px;
 }
+/* Fixed Sidebar Styling */
+.fixed-sidebar {
+    height: 100vh; /* Full height of the viewport */
+    position: sticky; /* Sticks to the top */
+    top: 0;
+    left: 0;
+    overflow: hidden; /* Prevent scrolling */
+    background-color: white; /* Ensure visibility */
+    z-index: 1000; /* Higher than navbar */
+    border-right: 1px solid #ddd; /* Optional: add a subtle border */
+}
+
 
   </style>
   
@@ -290,62 +306,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search_box'])) {
 // Avoid closing the connection prematurely; move `$conn->close()` to the end of the script if needed.
 ?>
 
-    <div class="container mt-4">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3">
-                <div class="list-group">
-                    <a href="../my_account.php" class="list-group-item list-group-item-action  bg-dark text-white">
-                        <i class="fas fa-user"></i> My Account
-                    </a>
-                    <a href="<?php echo BASE_URL; ?>home/user_purchased.php" class="list-group-item list-group-item-action">
-                        <i class="fas fa-shopping-cart"></i> Orders
-                    </a>
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <!-- Sidebar -->
+<div class="col-md-3 fixed-sidebar">
+    <div class="list-group">
+        <a href="../my_account.php" class="list-group-item list-group-item-action bg-dark text-white">
+            <i class="fas fa-user"></i> My Account
+        </a>
+        <a href="#" class="list-group-item list-group-item-action" id="statusBtn">
+            <i class="fas fa-box-open"></i> Status
+        </a>
+        <a href="<?php echo BASE_URL; ?>home/user_purchased.php" class="list-group-item list-group-item-action">
+            <i class="fas fa-shopping-bag"></i> Orders
+        </a>
+        <a href="<?php echo BASE_URL; ?>home/cancelled_order.php" class="list-group-item list-group-item-action">
+            <i class="fas fa-cog"></i> Cancel
+        </a>
+        <a href="#" class="list-group-item list-group-item-action" id="notificationBtn">
+            <i class="fas fa-bell"></i> Notifications
+        </a>
+        <a href="#" class="list-group-item list-group-item-action">
+            <i class="fas fa-tag"></i> My Vouchers
+        </a>
+        <a href="<?php echo BASE_URL; ?>../user_account/settings.php" class="list-group-item list-group-item-action">
+            <i class="fas fa-cog"></i> Settings
+        </a>
+        <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#logoutModal">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+</div>
 
-                    <a href="<?php echo BASE_URL; ?>admin/cancelled_order.php" class="list-group-item list-group-item-action">
-                        <i class="fas fa-cog"></i> Cancel
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action">
-                        <i class="fas fa-bell"></i> Notifications
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action">
-                        <i class="fas fa-tag"></i> My Vouchers
-                    </a>
-                   
-                    <a href="../user_account/settings.php" class="list-group-item list-group-item-action">
-                        <i class="fas fa-cog"></i> Settings
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#logoutModal">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-            </div>
-      </div>
+            <!-- Middle Section: Notifications & Order Status -->
+                <div class="col-md-9">
+                    <!-- Notification Panel (Initially Hidden) -->
+                    <div id="notificationPanel" class="bg-white shadow-sm p-3 rounded d-none">
+                        <h6 class="fw-bold text-secondary">Recently Received Notifications</h6>
+                        <ul class="list-unstyled">
+                            <?php while ($row = $result->fetch_assoc()): ?>
+                                <li>
+                                    <div class="d-flex align-items-start mb-3">
+                                    <img src="<?php echo BASE_URL . htmlspecialchars($row['image']); ?>" 
+                                            alt="Order Image" 
+                                            class="me-3 rounded-circle border border-dark" 
+                                            style="width: 40px; height: 40px; margin-left: 20px; border-width: 1px;">
+                                        <div>
+                                            <p class="mb-0 fw-bold" style="padding-left: 15px;">
+                                                <?php echo htmlspecialchars($row['product_name']); ?>
+                                            </p>
+                                            <small class="text-muted" style="padding-left: 15px;">
+                                                <?php 
+                                                    if ($row['status'] === 'Pending') {
+                                                        echo "Order ID (" . htmlspecialchars($row['id']) . "), Order Placed. Thank you for purchasing!";
+                                                    } elseif ($row['status'] === 'Completed' || $row['status'] === 'Received') {
+                                                        echo "Order ID (" . htmlspecialchars($row['id']) . ") Your Order has been delivered.";
+                                                    }
+                                                ?>
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <hr class="my-2"> <!-- Separator between notifications -->
+                                </li>
+                            <?php endwhile; ?>
+                        </ul>
+                    </div>
 
-    
-          <!-- Order Status Navigation & Products -->
-        <div class="col-md-9">
-            <div class="d-flex justify-content-between bg-white shadow-sm p-3 rounded">
-                <div class="status-tab text-center flex-fill mx-2 py-2 rounded bg-warning text-dark" data-status="pending">
-                    <i class="fas fa-box-open fa-2x"></i>
-                    <p class="mb-0">To Ship</p>
-                </div>
-                <div class="status-tab text-center flex-fill mx-2 py-2 rounded bg-info text-white" data-status="processing">
-                    <i class="fas fa-truck fa-2x"></i>
-                    <p class="mb-0">Processing</p>
-                </div>
-                <div class="status-tab text-center flex-fill mx-2 py-2 rounded bg-primary text-white" data-status="to_receive">
-                    <i class="fas fa-shopping-bag fa-2x"></i>
-                    <p class="mb-0">To Receive</p>
-                </div>
-                <div class="status-tab text-center flex-fill mx-2 py-2 rounded bg-success text-white" data-status="completed">
-                    <i class="fas fa-check-circle fa-2x"></i>
-                    <p class="mb-0">Completed</p>
-                </div>
-            </div>
 
-            <!-- Products Display Area -->
-            <div id="order-content" class="mt-4">
-                <p class="text-center">Select a status to view orders.</p>
+
+
+
+            <!-- Order Status Navigation (Visible by Default) -->
+            <div id="orderStatusSection" class="d-flex flex-column bg-white  p-3 rounded">
+                <div class="d-flex justify-content-between">
+                    <div class="status-tab text-center flex-fill mx-2 py-2 rounded bg-warning text-dark" data-status="pending">
+                        <i class="fas fa-box-open fa-2x"></i>
+                        <p class="mb-0">To Ship</p>
+                    </div>
+                    <div class="status-tab text-center flex-fill mx-2 py-2 rounded bg-info text-white" data-status="processing">
+                        <i class="fas fa-truck fa-2x"></i>
+                        <p class="mb-0">Processing</p>
+                    </div>
+                    <div class="status-tab text-center flex-fill mx-2 py-2 rounded bg-primary text-white" data-status="to_receive">
+                        <i class="fas fa-shopping-bag fa-2x"></i>
+                        <p class="mb-0">To Receive</p>
+                    </div>
+                    <div class="status-tab text-center flex-fill mx-2 py-2 rounded bg-success text-white" data-status="completed">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                        <p class="mb-0">Completed</p>
+                    </div>
+                </div>
+
+                <!-- Products Display Area -->
+                <div id="order-content" class="mt-4">
+                    <p class="text-center">Select a status to view orders.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -565,6 +621,36 @@ const acceptPolicyCheckbox = document.getElementById('acceptPolicy');
 
 
 <script>
+
+
+document.getElementById("statusBtn").addEventListener("click", function(event) {
+    event.preventDefault();
+    
+    var orderStatusSection = document.getElementById("orderStatusSection");
+    var notificationPanel = document.getElementById("notificationPanel");
+
+    // Hide notification panel
+    notificationPanel.classList.add("d-none");
+
+    // Show order status section
+    orderStatusSection.classList.remove("d-none");
+});
+document.getElementById("notificationBtn").addEventListener("click", function(event) {
+    event.preventDefault();
+    
+    var orderStatusSection = document.getElementById("orderStatusSection");
+    var notificationPanel = document.getElementById("notificationPanel");
+
+    // Hide notification panel
+    orderStatusSection.classList.add("d-none");
+
+    // Show order status section
+    notificationPanel.classList.remove("d-none");
+});
+
+
+
+
 document.addEventListener("DOMContentLoaded", function () {
     // Event listener for dynamically generated "Order Received" buttons
     document.body.addEventListener("click", function (event) {
