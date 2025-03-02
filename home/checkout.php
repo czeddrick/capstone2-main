@@ -84,95 +84,94 @@ $totalPayment = $merchandiseSubtotal + $shippingSubtotal - $voucherDiscount;
 $orderSuccess = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
-    $voucher_used = "10% Off"; // Example voucher
-    $discount = $merchandiseSubtotal * 0.10; // Calculate 10% discount
-    $placed_on = date("Y-m-d H:i:s");
-    $status = "Pending";
+  $voucher_used = "10% Off"; // Example voucher
+  $discount = $merchandiseSubtotal * 0.10; // Calculate 10% discount
+  $placed_on = date("Y-m-d H:i:s");
+  $status = "Pending";
+  $message = isset($_POST['message']) ? htmlspecialchars($_POST['message']) : ""; // Get the message from the form
 
-    $conn->begin_transaction(); // Start transaction
+  $conn->begin_transaction(); // Start transaction
 
-    $orderSuccess = true; // Assume success
+  $orderSuccess = true; // Assume success
 
-    foreach ($cart as $item) {
-        $name = htmlspecialchars($user['first_name'] . " " . $user['surname']);
-        $number = htmlspecialchars($user['phone']);
-        $color = htmlspecialchars($item['color']);
-        $email = filter_var($user['email'], FILTER_SANITIZE_EMAIL);
-        $address = htmlspecialchars($user['address']);
-        $payment_method = "Cash on Delivery";
-        $message = ""; // Optional message
-        $product_name = htmlspecialchars($item['product_name']);
-        $quantity = (int)$item['quantity'];
-        $total_price = (float)($item['price'] * $item['quantity']);
-        $image = htmlspecialchars($item['image']);
+  foreach ($cart as $item) {
+      $name = htmlspecialchars($user['first_name'] . " " . $user['surname']);
+      $number = htmlspecialchars($user['phone']);
+      $color = htmlspecialchars($item['color']);
+      $email = filter_var($user['email'], FILTER_SANITIZE_EMAIL);
+      $address = htmlspecialchars($user['address']);
+      $payment_method = "Cash on Delivery";
+      $product_name = htmlspecialchars($item['product_name']);
+      $quantity = (int)$item['quantity'];
+      $total_price = (float)($item['price'] * $item['quantity']);
+      $image = htmlspecialchars($item['image']);
 
-        $insert_order = $conn->prepare("
-            INSERT INTO orders 
-            (user_id, product_id, name, product_name, color, number, email, address, payment_method, voucher_used, total_products, total_price, placed_on, status, message, image) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
+      $insert_order = $conn->prepare("
+          INSERT INTO orders 
+          (user_id, product_id, name, product_name, color, number, email, address, payment_method, voucher_used, total_products, total_price, placed_on, status, message, image) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ");
 
-        $insert_order->bind_param(
-            "iisssssssissssss",
-            $user_id,
-            $item['product_id'],
-            $name,
-            $product_name,
-            $color,
-            $number,
-            $email,
-            $address,
-            $payment_method,
-            $voucher_used,
-            $quantity,
-            $total_price,
-            $placed_on,
-            $status,
-            $message,
-            $image
-        );
+      $insert_order->bind_param(
+          "iisssssssissssss",
+          $user_id,
+          $item['product_id'],
+          $name,
+          $product_name,
+          $color,
+          $number,
+          $email,
+          $address,
+          $payment_method,
+          $voucher_used,
+          $quantity,
+          $total_price,
+          $placed_on,
+          $status,
+          $message, // Include the message here
+          $image
+      );
 
-        if (!$insert_order->execute()) {
-            $orderSuccess = false;
-            echo "Error inserting order: " . $insert_order->error; // Debugging
-            break;
-        }
+      if (!$insert_order->execute()) {
+          $orderSuccess = false;
+          echo "Error inserting order: " . $insert_order->error; // Debugging
+          break;
+      }
 
-        $insert_order->close();
-    }
+      $insert_order->close();
+  }
 
-    if ($orderSuccess) {
-        // Only delete successfully ordered items
-        $placeholders = implode(',', array_fill(0, count($selected_items), '?'));
-        $delete_cart = $conn->prepare("DELETE FROM cart_items WHERE id IN ($placeholders) AND user_id = ?");
+  if ($orderSuccess) {
+      // Only delete successfully ordered items
+      $placeholders = implode(',', array_fill(0, count($selected_items), '?'));
+      $delete_cart = $conn->prepare("DELETE FROM cart_items WHERE id IN ($placeholders) AND user_id = ?");
 
-        $types = str_repeat('i', count($selected_items)) . 'i';
-        $params = array_merge($selected_items, [$user_id]);
-        $delete_cart->bind_param($types, ...$params);
+      $types = str_repeat('i', count($selected_items)) . 'i';
+      $params = array_merge($selected_items, [$user_id]);
+      $delete_cart->bind_param($types, ...$params);
 
-        if (!$delete_cart->execute()) {
-            echo "Error deleting cart items: " . $delete_cart->error; // Debugging
-            $orderSuccess = false;
-        }
+      if (!$delete_cart->execute()) {
+          echo "Error deleting cart items: " . $delete_cart->error; // Debugging
+          $orderSuccess = false;
+      }
 
-        $delete_cart->close();
-    }
+      $delete_cart->close();
+  }
 
-    if ($orderSuccess) {
-        $conn->commit(); // Commit transaction
+  if ($orderSuccess) {
+      $conn->commit(); // Commit transaction
 
-        // ✅ Call the get_order.php API to sync orders
-        $apiUrl = "http://localhost/capstone2-main/api/get_order.php"; // Change to actual API URL
+      // ✅ Call the get_order.php API to sync orders
+      $apiUrl = "http://localhost/capstone2-main/api/get_order.php"; // Change to actual API URL
 
-        // ✅ Method 1: Simple method using file_get_contents
-        $apiResponse = file_get_contents($apiUrl);
+      // ✅ Method 1: Simple method using file_get_contents
+      $apiResponse = file_get_contents($apiUrl);
 
-    } else {
-        $conn->rollback(); // Rollback if any order failed
-        echo "Transaction rolled back due to errors."; // Debugging
-    }
+  } else {
+      $conn->rollback(); // Rollback if any order failed
+      echo "Transaction rolled back due to errors."; // Debugging
+  }
 }
-
 ?>
 
 
@@ -192,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                     (<?php echo htmlspecialchars($user['phone']); ?>)</strong><br>
                     <?php echo nl2br(htmlspecialchars($user['address'])); ?>
                 </p>
-                <a href="edit_account.php" class="btn btn-dark btn-sm">Edit</a>
+                
             </div>
         </div>
         <h1>Checkout</h1>
@@ -230,7 +229,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     Choose Voucher
   </button>
 </div>
-
+        <div class="mb-4">
+            <label for="message" class="form-label">Message us!</label>
+            <input type="text" class="form-control" id="message" name="message" placeholder="Please leave a message...">
+        </div>
 <div class="modal fade" id="voucherModal" tabindex="-1" aria-labelledby="voucherModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -328,34 +330,36 @@ document.getElementById('confirmPlaceOrderBtn').addEventListener('click', functi
 
 
 <script>
-
-
-
 // PayMongo Button Click Event
 document.getElementById('paymongo-button').addEventListener('click', function (e) {
-  e.preventDefault();
+    e.preventDefault();
+    const button = this;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
 
-  const button = this;
-  button.disabled = true;
-  button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
-
-  fetch('create_paymongo_link.php')
-    .then(response => response.json())
+    fetch('create_paymongo_link.php')
+    .then(async response => {
+        const text = await response.text();
+        try {
+            return JSON.parse(text);
+        } catch {
+            throw new Error(Invalid response: ${text.slice(0, 100)});
+        }
+    })
     .then(data => {
-      if (data.checkout_url) {
-        window.location.href = data.checkout_url;
-      } else {
-        alert('No checkout URL received. Please try again.');
-      }
+        if (data.checkout_url) {
+            window.location.href = data.checkout_url;
+        } else {
+            throw new Error(data.error || 'Payment initialization failed');
+        }
     })
     .catch(error => {
-      console.error('Error:', error);
-      alert('Error creating payment link: ' + error.message);
-      button.disabled = false;
-      button.innerHTML = 'Payment Center / E-Wallet / Online Banking';
+        console.error('Error:', error);
+        alert(error.message);
+        button.disabled = false;
+        button.innerHTML = 'Payment Center / E-Wallet / Online Banking';
     });
 });
-
 // Initialize PayPal Button
 paypal.Buttons().render('#paypal-button-container');
 </script>
@@ -364,10 +368,8 @@ paypal.Buttons().render('#paypal-button-container');
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<div class="mb-4">
-    <label for="message" class="form-label">Message us!</label>
-    <input type="text" class="form-control" id="message" placeholder="Please leave a message...">
-</div>
+
+
 
 
             <div class="card mb-4">

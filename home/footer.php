@@ -99,7 +99,7 @@ footer {
       <!-- Links Section -->
       <div class="col-lg-2">
         <h5>Links</h5>
-        <a href="index.php" class="d-block">Home</a>
+        <a href="<?php echo BASE_URL; ?>index.php" class="d-block">Home</a>
         <a href="<?php echo BASE_URL; ?>home/products.php" class="d-block">Products</a>
         <a href="<?php echo BASE_URL; ?>home/contact.php" class="d-block">Contact Us</a>
       </div>

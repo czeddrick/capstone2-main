@@ -29,7 +29,15 @@ if (isset($_GET['search_box'])) {
     echo "No search term provided.";
     exit;
 }
+$soldQuantities = [];
+$sqlSold = "SELECT product_id, COUNT(product_id) AS total_sold FROM reviews GROUP BY product_id";
+$resultSold = $conn->query($sqlSold);
 
+if ($resultSold->num_rows > 0) {
+    while ($row = $resultSold->fetch_assoc()) {
+        $soldQuantities[$row['product_id']] = $row['total_sold'];
+    }
+}
 $conn->close(); // Close the connection
 ?>
 
@@ -157,8 +165,8 @@ $conn->close(); // Close the connection
                   <?php echo $product['stock'] > 0 ? $product['stock'] : '<span class="text-danger">Out of Stock</span>'; ?>
                 </p>
                 <p class="small text-muted mb-0">Sold: 
-                  <span class="fw-bold"><?php echo $product['sold']; ?></span>
-                </p>
+                    <span class="fw-bold">
+                      <?php echo isset($soldQuantities[$product['id']]) ? $soldQuantities[$product['id']] : 0; ?>
               </div>
 
               

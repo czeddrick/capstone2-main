@@ -43,7 +43,16 @@ if (isset($_POST['search_box'])) {
 
     $stmt->close();
 }
+// Fetch total sold quantities for each product
+$soldQuantities = [];
+$sqlSold = "SELECT product_id, COUNT(product_id) AS total_sold FROM reviews GROUP BY product_id";
+$resultSold = $conn->query($sqlSold);
 
+if ($resultSold->num_rows > 0) {
+    while ($row = $resultSold->fetch_assoc()) {
+        $soldQuantities[$row['product_id']] = $row['total_sold'];
+    }
+}
 // Close connection
 $conn->close();
 
@@ -121,7 +130,7 @@ $conn->close();
 
   <?php
    include 'home/navbar.php'; ?>
-   <?php include "home/chatbot.html"; ?>
+  
 <div class="container my-5">
   <div class="row align-items-start">
     <!-- Main Banner Section with Slide -->
@@ -358,8 +367,8 @@ $conn->close();
                   <?php echo $product['stock'] > 0 ? $product['stock'] : '<span class="text-danger">Out of Stock</span>'; ?>
                 </p>
                 <p class="small text-muted mb-0">Sold: 
-                  <span class="fw-bold"><?php echo $product['sold']; ?></span>
-                </p>
+                    <span class="fw-bold">
+                      <?php echo isset($soldQuantities[$product['id']]) ? $soldQuantities[$product['id']] : 0; ?>
               </div>
             </div>
           </div>
@@ -383,7 +392,7 @@ $conn->close();
           BACHELOR'S DEGREE IN GRAPHIC </p>
           <p>DESIGN STRONG TECHNICAL DESIGN SKILLS
         </p>
-        <a href="#" class="btn btn-outline-warning text-dark">Apply Now</a>
+        <a href="https://hr1.gwamerchandise.com/jobpost" class="btn btn-outline-warning text-dark">Apply Now</a>
       </div>
       <video  class="video" src="images/graphic.mp4" autoplay muted loop></video>
     </div>

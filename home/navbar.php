@@ -24,7 +24,7 @@ if ($user_id) {
     }
 }
 $sql = "SELECT id, product_name, image, status FROM `orders` 
-        WHERE (status = 'pending' OR status = 'completed' OR status = 'received') 
+        WHERE (status = 'pending' OR status = 'completed' OR status = 'received' OR status = 'Pending cancel' OR status = 'Cancelled') 
         AND user_id = ? 
         ORDER BY id DESC";  // Change `id` to `created_at` if available
 
@@ -83,28 +83,41 @@ $result = $stmt->get_result();
                         <li class="dropdown-header fw-bold text-secondary">Recently Received Notifications</li>
                         <ul>
                         <?php if ($result->num_rows > 0): ?>
-                            <?php while ($row = $result->fetch_assoc()): ?>
-                                <li>
-                                    <div class="d-flex align-items-start mb-3">
-                                        <img src="<?php echo BASE_URL . htmlspecialchars($row['image']); ?>" alt="Order Image" class="me-2 rounded-circle" style="width: 40px; height: 40px; margin-right: 50px;">
-                                        <div>
-                                            <p class="mb-0 fw-bold" style="margin-left: 20px;">
-                                                <?php echo htmlspecialchars($row['product_name']); ?>
-                                            </p>
-                                            <small class="text-muted" style="margin-left: 20px;">
-                                                <?php 
+                                <?php 
+                                $count = 0; // Counter to track the number of displayed orders
+                                while ($row = $result->fetch_assoc()): 
+                                    if ($count >= 5) break; // Stop loop after 5 orders
+                                    $count++;
+                                ?>
+                                    <li>
+                                        <div class="d-flex align-items-start mb-3">
+                                            <img src="<?php echo BASE_URL . htmlspecialchars($row['image']); ?>" 
+                                                alt="Order Image" 
+                                                class="me-2 rounded-circle" 
+                                                style="width: 40px; height: 40px; margin-right: 50px;">
+                                            <div>
+                                                <p class="mb-0 fw-bold" style="margin-left: 20px;">
+                                                    <?php echo htmlspecialchars($row['product_name']); ?>
+                                                </p>
+                                                <small class="text-muted" style="margin-left: 20px;">
+                                                    <?php 
                                                     if ($row['status'] === 'Pending') {
                                                         echo "Order ID (" . htmlspecialchars($row['id']) . "), Order Placed, Thank you for purchasing!";
                                                     } elseif ($row['status'] === 'Completed' || $row['status'] === 'Received') {
                                                         echo "Order ID (" . htmlspecialchars($row['id']) . ") Your Order has been delivered.";
+                                                    } elseif ($row['status'] === 'Pending Cancel') {
+                                                        echo "Order ID (" . htmlspecialchars($row['id']) . ") Your cancellation request is being processed.";
+                                                    } elseif ($row['status'] === 'Cancelled') {
+                                                        echo "Order ID (" . htmlspecialchars($row['id']) . ") Your order has been cancelled.";
                                                     }
-                                                ?>
-                                            </small>
+                                                    ?>
+                                                </small>
+                                            </div>
                                         </div>
-                                    </div>
-                                </li>
-                            <?php endwhile; ?>
-                        <?php else: ?>
+                                    </li>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+
              <!-- Default Notification Message -->
                         <li class="text-center text-secondary p-3">
                             <p class="fw-bold">Welcome to Your Notifications! 🎉</p>
@@ -185,7 +198,7 @@ $result = $stmt->get_result();
                         </a>
                     </li>
                     <li class="nav-item ms-3">
-                        <a class="btn btn-outline-dark fw-bold" href="<?php echo BASE_URL; ?>main/register.php">
+                        <a class="btn btn-outline-dark fw-bold" href="<?php echo BASE_URL; ?>main/otp_request.php">
                             <i class="fas fa-user-plus me-2"></i>Sign Up
                         </a>
                     </li>

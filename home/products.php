@@ -1,9 +1,8 @@
-
 <?php
- include "../db/connect.php";
- session_start();
+include "../db/connect.php";
+session_start();
 ?>
- <?php include 'navbar.php'; ?>
+<?php include 'navbar.php'; ?>
 <?php
 // Fetch all products initially
 $sql = "SELECT * FROM products"; 
@@ -16,22 +15,17 @@ if ($result->num_rows > 0) {
 } else {
     echo "No products found.";
 }
-$sql = "SELECT p.*, 
-        COALESCE(SUM(o.total_products), 0) AS sold 
-        FROM products p
-        LEFT JOIN orders o ON p.id = o.product_id
-        GROUP BY p.id";
 
-$result = $conn->query($sql);
+// Fetch total sold quantities for each product
+$soldQuantities = [];
+$sqlSold = "SELECT product_id, COUNT(product_id) AS total_sold FROM reviews GROUP BY product_id";
+$resultSold = $conn->query($sqlSold);
 
-$products = [];
-if ($result->num_rows > 0) {
-    // Fetch all rows as an associative array
-    $products = $result->fetch_all(MYSQLI_ASSOC);
-} else {
-    echo "No products found.";
+if ($resultSold->num_rows > 0) {
+    while ($row = $resultSold->fetch_assoc()) {
+        $soldQuantities[$row['product_id']] = $row['total_sold'];
+    }
 }
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -42,7 +36,10 @@ if ($result->num_rows > 0) {
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/jpg" href="../images/logo.jpg">
+  <link rel="icon" type="image/png" href="http://localhost/capstone2-main/images/logo.png">
+
+
+
   <title>Products</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -126,8 +123,8 @@ if ($result->num_rows > 0) {
                   <?php echo $product['stock'] > 0 ? $product['stock'] : '<span class="text-danger">Out of Stock</span>'; ?>
                 </p>
                 <p class="small text-muted mb-0">Sold: 
-                      <span class="fw-bold"><?php echo $product['sold']; ?></span>
-                    </p>
+                    <span class="fw-bold">
+                      <?php echo isset($soldQuantities[$product['id']]) ? $soldQuantities[$product['id']] : 0; ?>
               </div>
             </div>
           </div>

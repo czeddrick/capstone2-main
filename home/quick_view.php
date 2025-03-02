@@ -170,7 +170,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
     object-fit: contain; /* Maintain aspect ratio */
 }
 
-        
+.product-image {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .main-image {
+        max-width: 100%;  /* Ensure it doesn't overflow */
+        max-height: 500px; /* Adjust the max height as needed */
+        width: auto;  /* Maintain aspect ratio */
+        height: auto; /* Maintain aspect ratio */
+        object-fit: contain; /* Prevent distortion */
+    }
   </style>
   <title><?php echo htmlspecialchars($product['product_name']); ?> - Quick View</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -186,13 +198,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_to_cart'])) {
     <div class="row product-section">
         <!-- Product Image -->
         <div class="col-md-5 product-image">
-            <img src="<?php echo BASE_URL . $product['image_url']; ?>" alt="<?php echo htmlspecialchars($product['product_name']); ?>" class="img-fluid main-image" id="mainImage">
-            <div class="mt-3 d-flex gap-2">
-                <!-- Placeholder for additional images -->
-                <img src="<?php echo BASE_URL; ?>images/2nd.png" alt="Side Angle" class="small-image">
-                <img src="<?php echo BASE_URL; ?>images/1st.png" alt="Back Angle" class="small-image">
-                <img src="<?php echo BASE_URL; ?>images/3rd.png" alt="Top Angle" class="small-image">
-            </div>
+            <img src="<?php echo BASE_URL . $product['image_url']; ?>" 
+                alt="<?php echo htmlspecialchars($product['product_name']); ?>" 
+                class="img-fluid main-image" id="mainImage">
         </div>
 
         <!-- Product Details -->

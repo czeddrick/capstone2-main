@@ -213,7 +213,7 @@ function isOrderReviewed($conn, $order_id) {
                             <button type="button" class="btn btn-warning mt-2 view-details" data-order='<?php echo json_encode($order); ?>'>
                                 View Details
                             </button>
-                            <button type="button" class="btn btn-dark mt-2 contact-us">
+                            <button type="button" class="btn btn-dark mt-2"onclick="window.location.href='<?php echo BASE_URL; ?>home/contact.php'">
                                 Contact Us
                             </button>
                             <!-- 

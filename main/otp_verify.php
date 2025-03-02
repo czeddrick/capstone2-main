@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($userOTP == $_SESSION['otp']) {
         $_SESSION['email_verified'] = true;
+        $_SESSION['registered_email'] = $_SESSION['otp_email']; // Ensure email is available in register.php
         header("Location: register.php");
         exit();
     } else {
@@ -28,14 +29,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
+
+        
+    
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OTP Verification</title>
-    <style>
-        body {
+    <title>OTP Request</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+     <style>
+    body {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -95,6 +102,115 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-decoration: underline;
         }
     </style>
+     <style>
+       
+        .login-container {
+            display: flex;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            height: 650px;
+            width: 100%;
+            overflow: hidden;
+            position: center;
+        }
+        .login-container .image-container {
+            flex: 1;
+            background: #007bff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0; /* Remove padding to ensure the image fits perfectly */
+            overflow: hidden; /* Ensure the image doesn't overflow */
+        }
+        .login-container .image-container img {
+            width: 100%; /* Ensure the image takes up the full width */
+            height: 100%; /* Ensure the image takes up the full height */
+            object-fit: cover; /* Ensure the image covers the container without distortion */
+        }
+        .login-container .login-form {
+            flex: 1;
+            padding: 40px;
+        }
+       
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+      
+        .line-separator {
+            width: 1px;
+            background: black;
+            height: 40px;
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            border-color: #ffc107;
+            color: #333;
+            transition: background 0.3s ease;
+        }
+        .btn-warning:hover {
+            background-color: #e0a800;
+            border-color: #e0a800;
+        }
+        .form-control {
+            border-radius: 5px;
+            padding: 10px;
+        }
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+        .position-relative {
+            margin-bottom: 20px;
+        }
+        .position-relative button {
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .position-relative button i {
+            color: #666;
+        }
+        .center-links {
+            text-align: center;
+            margin-top: 15px; /* Adjust spacing */
+        }
+        .center-links a {
+            display: block; /* Make links appear on separate lines */
+            margin-bottom: 10px; /* Spacing between links */
+        }
+    </style>
+    </head>
+    <body>
+    <div class="login-container">
+        <div class="image-container">
+            <img src="../images/Great Wall Arts.png" alt="Login Illustration">
+        </div>
+    <div class="container" style="margin-top:150px;">
+        <h1>Enter Verification Code</h1>
+        <p>Your verification code was sent to <span class="text-bold text-warning"><?php echo $_SESSION['otp_email']; ?></span></p>
+        <form method="POST">
+            <div class="otp-input-group">
+                <?php for ($i = 0; $i < 6; $i++): ?>
+                    <input type="text" name="otp[]" class="otp-input" maxlength="1" required>
+                <?php endfor; ?>
+            </div>
+            <div id="timer-display" class="timer"></div>
+            <button type="submit">Verify OTP</button>
+        </form>
+        <a href="otp_request.php" class="back-link">&larr; Back</a>
+    </div>
+    </div>
+    
+    
+           
+
+
+
     <script>
         let timer = 50; // Set the timer in seconds
         const countdownElement = document.getElementById('timer-display');
@@ -137,21 +253,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             startCountdown(); // Start the countdown timer
         });
     </script>
-</head>
-<body>
-    <div class="container">
-        <h1>Enter Verification Code</h1>
-        <p>Your verification code was sent to <span class="text-bold text-warning"><?php echo $_SESSION['otp_email']; ?></span></p>
-        <form method="POST">
-            <div class="otp-input-group">
-                <?php for ($i = 0; $i < 6; $i++): ?>
-                    <input type="text" name="otp[]" class="otp-input" maxlength="1" required>
-                <?php endfor; ?>
-            </div>
-            <div id="timer-display" class="timer"></div>
-            <button type="submit">Verify OTP</button>
-        </form>
-        <a href="otp_request.php" class="back-link">&larr; Back</a>
-    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
 </body>
 </html>
